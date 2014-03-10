@@ -4,42 +4,6 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.ListBuffer
 import scala.collection.immutable.Vector
 
-/*
-import com.sun.jna.{Library, Native, Platform}
-import com.perisic.ring._
-import java.math._
-
-trait CLibrary extends Library {
-  def puts(s: String)
-}
-
-object CLibrary {
-  def Instance = Native.loadLibrary(
-    if (Platform.isWindows) "msvcrt" else "c",
-    classOf[CLibrary]).asInstanceOf[CLibrary]
-}
-
-trait Symmetrica extends Library {
-	def m_perm_schubert_monom_summe(perm: Vector[Int], res: Any): Int
-}
-
-object Symmetrica {
-	def Instance = Native.loadLibrary("symmetrica", classOf[Symmetrica]).asInstanceOf[Symmetrica]
-}
-
-object Main {
-  def main(args: Array[String]) {
-    CLibrary.Instance.puts("Hello, World")
-    for ((arg, i) <- args.zipWithIndex) {
-      CLibrary.Instance.puts(
-        "Argument %d: %s".format(i, arg))
-    }
-  }
-
-}
-
-*/
-
 object Main {
 	def main(args: Array[String]) {
 	    val perm = Vector(3, 1, 4, 2) //SchubertFactory.readPermutation()
