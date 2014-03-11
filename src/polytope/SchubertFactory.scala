@@ -34,7 +34,7 @@ object SchubertFactory {
 	        readByte()
 	    }} 
 	}
-	implicit class Polynomial(val value: HashMap[Long, Int] = HashMap(0L -> 1)) {
+	implicit class Polynomial(val value: HashMap[Long, Int] = HashMap()) {
 		@inline
 		def +=(p2: Polynomial): Polynomial = {
 			p2.value.foreach(kv => value(kv._1) = value.getOrElse(kv._1, 0) + kv._2)
@@ -44,6 +44,22 @@ object SchubertFactory {
 		def +=(t: Term): Polynomial = {
 			value(t.value) = value.getOrElse(t.value, 0) + 1
 			this
+		}
+		@inline 
+		def isZero(): Boolean = value.isEmpty || (value.size == 1 && value.contains(0L))
+		
+		override def toString(): String = {
+			if (this.isZero()) "0"
+			value.foldLeft("")((s,kv) => {
+				if (s != "") {
+					if (kv._2 != 1) s + " + " + kv._2.toString + "*" + Term(kv._1).toString
+					else s + " + " + Term(kv._1).toString
+				} 
+				else {
+					if(kv._2 != 1) kv._2.toString + "*" + Term(kv._1).toString
+					else Term(kv._1).toString
+				}
+			})
 		}
 	}
 	def isIdentity(perm: Permutation): Boolean = {
@@ -60,11 +76,29 @@ object SchubertFactory {
 	implicit class Term(val value: Long) {
 		// Increment the i^th exponent by one (0 <= i <= 15)
 		@inline
-		def incExp(i: Int): Long = ((31L << i*4) & value) + (1L << i*4)
+		def incExp(i: Int): Long = value + (1L << i*4)
 		@inline
-		def changeExp(i: Int, exp: Int) = (~(31L << i*4) & value) + (exp << i*4)
+		def changeExp(i: Int, exp: Int) = (~(15L << i*4) & value) + (exp << i*4)
+		@inline
+		def getExp(i: Int): Int = ((value >> i*4) & 15L).toInt
 		@inline
 		def isZero(): Boolean = value == 0L
+		@inline
+		override def toString(): String = {
+			var i = 0
+			var s = ""
+			while (i < 16) {
+				val exp = (value >> i*4) & 15L 
+				if (exp != 0L) {
+					if (s != "") s += "*"
+					s += "x" + i
+					if (exp > 1)
+						s += "^" + exp
+				}
+				i += 1
+			}
+			return s
+		}
 	}
 	
 	// Makes no attempt to check that the Permutation is actually a Permutation
