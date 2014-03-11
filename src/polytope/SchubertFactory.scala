@@ -1,6 +1,7 @@
 package polytope
 
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
 import scala.collection.immutable.Vector
 
@@ -22,10 +23,95 @@ object Main {
  *  TODO If I run 8 copies of the algorithm, one per core, will the node run out of memory? If so, should I parallelize the algorithm?
  */
 object SchubertFactory {
-	type Monomial = Pair[Int, Vector[Int]]
-	type Polynomial = ListBuffer[Monomial]
-	type Permutation = Vector[Int]
+	type Permutation = Vector[Byte]
 	
+	def readPermutation(): Permutation = {
+	    println("Schubert Polynomial Calculator")
+	    println("Please enter the number of symbols: ")
+	    val n = readInt()
+	    return Vector.tabulate(n){i => { 
+	        printf("%d => ", i+1)
+	        readByte()
+	    }} 
+	}
+	implicit class Polynomial(val value: HashMap[Long, Int] = HashMap(0L -> 1)) {
+		@inline
+		def +=(p2: Polynomial): Polynomial = {
+			p2.value.foreach(kv => value(kv._1) = value.getOrElse(kv._1, 0) + kv._2)
+			this
+		}
+		@inline
+		def +=(t: Term): Polynomial = {
+			value(t.value) = value.getOrElse(t.value, 0) + 1
+			this
+		}
+	}
+	def isIdentity(perm: Permutation): Boolean = {
+	    var i: Int = 0
+	    while (i < perm.length) {
+	        i += 1
+	        if (perm(i) != i) return false
+	    }
+	    return true
+	}
+	 
+	// A term with at most 16 variables whose exponents are at most 15
+	// Each block of 4 bits represents a single exponent
+	implicit class Term(val value: Long) {
+		// Increment the i^th exponent by one (0 <= i <= 15)
+		@inline
+		def incExp(i: Int): Long = ((31L << i*4) & value) + (1L << i*4)
+		@inline
+		def changeExp(i: Int, exp: Int) = (~(31L << i*4) & value) + (exp << i*4)
+		@inline
+		def isZero(): Boolean = value == 0L
+	}
+	
+	// Makes no attempt to check that the Permutation is actually a Permutation
+	// i.e., that it contains every number 1..n exactly once
+	def schubertPolynomial(perm: Permutation): Polynomial = { 
+	    if (isIdentity(perm)) return Polynomial()
+	    
+	    val leadFactor: Term = 0L
+	    return schubertAlgorithm(leadFactor, 0, perm.length-1, perm)
+	}
+	def schubertAlgorithm(leadFactor: Term, index: Int, exponent: Int, perm: Permutation): Polynomial = {
+		val result = new Polynomial(HashMap())
+		
+		// Set limits of the optimized code
+		/*
+		require(index < 16)
+		require(exponent < 16)
+		require(perm.length < 16)
+		*/
+		if (perm.length == 2) {
+			if (perm(0) == 2) {
+				result += leadFactor.incExp(index)
+			} else {
+				result += leadFactor
+			}
+		} else if (perm(0) == perm.length) {
+		    val newPerm: Permutation = perm.drop(1)
+		    val newLeadFactor: Term = leadFactor.changeExp(index, exponent)
+		    result += schubertAlgorithm(newLeadFactor, index+1, newPerm.length - 1, newPerm)
+		} else {
+		    var max: Int = perm.length + 1
+		    var i: Int = 1
+		    while (i < perm.length) {
+		        if (perm(i) < max && perm(i) > perm(0)) {
+		        	max = perm(i)
+		        	val newPerm: Permutation = perm.updated(0, perm(i)).updated(i, perm(0))
+		            result += schubertAlgorithm(leadFactor, index, exponent-1, newPerm)
+		        }
+		        i += 1
+		    }
+		}
+		return result
+	}
+	
+	///////////////////////////////////
+	// Tests
+	///////////////////////////////////
 	def time[R](block: => R): R = {
 	    val t0 = System.nanoTime()
 	    val result = block
@@ -48,11 +134,10 @@ object SchubertFactory {
 	    })
 	    println("====")
 	    Thread sleep 200
-	    Vector.range(0, 10).foreach( _ => {
-	        time { SchubertFactory.schubertPolynomial(Vector(10, 5, 2, 4, 15, 1, 3, 16, 12, 13, 9, 6, 7, 14, 8, 11))}
-	        time { SchubertFactory.schubertPolynomial(Vector(2, 7, 13, 10, 5, 9, 1, 12, 16, 13, 8, 4, 3, 6, 11, 15))}
-	        time { SchubertFactory.schubertPolynomial(Vector(1, 5, 4, 10, 3, 2, 12, 13, 16, 8, 7, 11, 9, 15, 9, 6))}
-	    })
+	    //time { SchubertFactory.schubertPolynomial(Vector(10, 5, 2, 4, 15, 1, 3, 16, 12, 13, 9, 6, 7, 14, 8, 11))}
+	    //time { SchubertFactory.schubertPolynomial(Vector(2, 7, 13, 10, 5, 9, 1, 12, 16, 13, 8, 4, 3, 6, 11, 15))}
+	    //time { SchubertFactory.schubertPolynomial(Vector(1, 5, 4, 10, 3, 2, 12, 13, 16, 8, 7, 11, 9, 15, 9, 6))}
+	    
 	    Vector.range(0, 20).foreach(
 	            _ =>
 	    		time { SchubertFactory.schubertPolynomial(Vector(3, 1, 4, 5, 2)) }
@@ -69,61 +154,5 @@ object SchubertFactory {
 	    println(SchubertFactory.schubertPolynomial(Vector(1,2,3,4)))
 	    println(SchubertFactory.schubertPolynomial(Vector(2,1,3,4)))
 	    println(SchubertFactory.schubertPolynomial(Vector(4,3,2,1)))
-	}
-	def readPermutation(): Permutation = {
-	    println("Schubert Polynomial Calculator")
-	    println("Please enter the number of symbols: ")
-	    val n = readInt()
-	    return Vector.tabulate(n){i => { 
-	        printf("%d => ", i+1)
-	        readInt()
-	    }} 
-	}
-	def isIdentity(perm: Permutation): Boolean = {
-	    var i: Int = 0
-	    while (i < perm.length) {
-	        i += 1
-	        if (perm(i) != i) return false
-	    }
-	    return true
-	}
-	
-	// Makes no attempt to check that the Permutation is actually a Permutation
-	// i.e., that it contains every number 1..n exactly once
-	def schubertPolynomial(perm: Permutation): Polynomial = { 
-	    if (isIdentity(perm)) return ListBuffer((1, Vector(0)))
-	    
-	    val leadFactor: Vector[Int] = Vector.fill(perm.length){0}
-	    return schubertAlgorithm(leadFactor, 0, perm.length - 1, perm)
-	}
-	def schubertAlgorithm(leadFactor: Vector[Int], index: Int, exponent: Int, perm: Permutation): Polynomial = {
-		val result: Polynomial = ListBuffer()
-		if (leadFactor.length == 0) {
-			println("Error in algorithm(): leadTerm was 0.")
-			return result
-		}
-		if (perm.length == 2) {
-			if (perm(0) == 2) {
-				result.append((1, leadFactor.updated(index,leadFactor(index)+1)))
-			} else {
-			    result.append((1, leadFactor))
-			}
-		} else if (perm(0) == perm.length) {
-		    val newPerm: Permutation = perm.drop(1)
-		    val newLeadFactor: Vector[Int] = leadFactor.updated(index, exponent)
-		    result.appendAll(schubertAlgorithm(newLeadFactor, index+1, newPerm.length - 1, newPerm))
-		} else {
-		    var max: Int = perm.length + 1
-		    var i: Int = 1
-		    while (i < perm.length) {
-		        if (perm(i) < max && perm(i) > perm(0)) {
-		        	max = perm(i)
-		        	val newPerm: Permutation = perm.updated(0, perm(i)).updated(i, perm(0))
-		            result.appendAll(schubertAlgorithm(leadFactor, index, exponent-1, newPerm))
-		        }
-		        i += 1
-		    }
-		}
-		return result
 	}
 }
