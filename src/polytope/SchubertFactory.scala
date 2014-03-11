@@ -23,6 +23,8 @@ object Main {
  *  TODO If I run 8 copies of the algorithm, one per core, will the node run out of memory? If so, should I parallelize the algorithm?
  */
 object SchubertFactory {
+	type Polynomial = HashMap[Long, Int]
+	type Term = Long
 	type Permutation = Vector[Byte]
 	
 	def readPermutation(): Permutation = {
@@ -34,33 +36,31 @@ object SchubertFactory {
 	        readByte()
 	    }} 
 	}
-	implicit class Polynomial(val value: HashMap[Long, Int] = HashMap()) {
-		@inline
-		def +=(p2: Polynomial): Polynomial = {
-			p2.value.foreach(kv => value(kv._1) = value.getOrElse(kv._1, 0) + kv._2)
-			this
+	
+	def addInPlace(p1: Polynomial, p2: Polynomial) = {
+		p2.foreach(kv => p1(kv._1) = p1.getOrElse(kv._1, 0) + kv._2)
+	}
+	def addInPlace(p1: Polynomial, t: Term) = {
+		p1(t) = p1.getOrElse(t, 0) + 1
+	}
+	def isZero(p: Polynomial): Boolean = {
+		for (t <- p.keys) {
+			if (t != 0L && p(t) != 0) return false
 		}
-		@inline
-		def +=(t: Term): Polynomial = {
-			value(t.value) = value.getOrElse(t.value, 0) + 1
-			this
-		}
-		@inline 
-		def isZero(): Boolean = value.isEmpty || (value.size == 1 && value.contains(0L))
-		
-		override def toString(): String = {
-			if (this.isZero()) "0"
-			value.foldLeft("")((s,kv) => {
-				if (s != "") {
-					if (kv._2 != 1) s + " + " + kv._2.toString + "*" + Term(kv._1).toString
-					else s + " + " + Term(kv._1).toString
-				} 
-				else {
-					if(kv._2 != 1) kv._2.toString + "*" + Term(kv._1).toString
-					else Term(kv._1).toString
-				}
-			})
-		}
+		return true
+	}
+	def polyToString(p: Polynomial): String = {	
+		if (isZero(p)) "0"
+		p.foldLeft("")((s,kv) => {
+			if (s != "") {
+				if (kv._2 != 1) s + " + " + kv._2.toString + "*" + termToString(kv._1)
+				else s + " + " + termToString(kv._1)
+			} 
+			else {
+				if(kv._2 != 1) kv._2.toString + "*" + termToString(kv._1)
+				else termToString(kv._1)
+			}
+		})
 	}
 	def isIdentity(perm: Permutation): Boolean = {
 	    var i: Int = 0
@@ -73,44 +73,48 @@ object SchubertFactory {
 	 
 	// A term with at most 16 variables whose exponents are at most 15
 	// Each block of 4 bits represents a single exponent
-	implicit class Term(val value: Long) {
-		// Increment the i^th exponent by one (0 <= i <= 15)
-		@inline
-		def incExp(i: Int): Long = value + (1L << i*4)
-		@inline
-		def changeExp(i: Int, exp: Int) = (~(15L << i*4) & value) + (exp << i*4)
-		@inline
-		def getExp(i: Int): Int = ((value >> i*4) & 15L).toInt
-		@inline
-		def isZero(): Boolean = value == 0L
-		@inline
-		override def toString(): String = {
-			var i = 0
-			var s = ""
-			while (i < 16) {
-				val exp = (value >> i*4) & 15L 
-				if (exp != 0L) {
-					if (s != "") s += "*"
-					s += "x" + i
-					if (exp > 1)
-						s += "^" + exp
-				}
-				i += 1
+
+	// Increment the i^th exponent by one (0 <= i <= 15)
+	
+	@inline
+	def incExp(t: Term, i: Int): Term = t + (1L << i*4)
+	
+	@inline
+	def changeExp(t: Term, i: Int, exp: Int): Term = (~(15L << i*4) & t) + (exp << i*4)
+	
+	@inline
+	def getExp(t: Term, i: Int): Int = ((t >> i*4) & 15L).toInt
+	
+	@inline
+	def isZero(t: Term): Boolean = t == 0L
+	
+	@inline
+	def termToString(t: Term): String = {
+		var i = 0
+		var s = ""
+		while (i < 16) {
+			val exp = (t >> i*4) & 15L 
+			if (exp != 0L) {
+				if (s != "") s += "*"
+				s += "x" + i
+				if (exp > 1)
+					s += "^" + exp
 			}
-			return s
+			i += 1
 		}
+		return s
 	}
 	
 	// Makes no attempt to check that the Permutation is actually a Permutation
 	// i.e., that it contains every number 1..n exactly once
 	def schubertPolynomial(perm: Permutation): Polynomial = { 
-	    if (isIdentity(perm)) return Polynomial()
+	    if (isIdentity(perm)) return HashMap[Term, Int]()
 	    
 	    val leadFactor: Term = 0L
 	    return schubertAlgorithm(leadFactor, 0, perm.length-1, perm)
 	}
 	def schubertAlgorithm(leadFactor: Term, index: Int, exponent: Int, perm: Permutation): Polynomial = {
-		val result = new Polynomial(HashMap())
+		val result = HashMap[Term, Int]()
 		
 		// Set limits of the optimized code
 		/*
@@ -120,14 +124,14 @@ object SchubertFactory {
 		*/
 		if (perm.length == 2) {
 			if (perm(0) == 2) {
-				result += leadFactor.incExp(index)
+				addInPlace(result, incExp(leadFactor, index))
 			} else {
-				result += leadFactor
+				addInPlace(result, leadFactor)
 			}
 		} else if (perm(0) == perm.length) {
 		    val newPerm: Permutation = perm.drop(1)
-		    val newLeadFactor: Term = leadFactor.changeExp(index, exponent)
-		    result += schubertAlgorithm(newLeadFactor, index+1, newPerm.length - 1, newPerm)
+		    val newLeadFactor: Term = changeExp(leadFactor, index, exponent)
+		    addInPlace(result, schubertAlgorithm(newLeadFactor, index+1, newPerm.length - 1, newPerm))
 		} else {
 		    var max: Int = perm.length + 1
 		    var i: Int = 1
@@ -135,7 +139,7 @@ object SchubertFactory {
 		        if (perm(i) < max && perm(i) > perm(0)) {
 		        	max = perm(i)
 		        	val newPerm: Permutation = perm.updated(0, perm(i)).updated(i, perm(0))
-		            result += schubertAlgorithm(leadFactor, index, exponent-1, newPerm)
+		            addInPlace(result, schubertAlgorithm(leadFactor, index, exponent-1, newPerm))
 		        }
 		        i += 1
 		    }
@@ -181,12 +185,12 @@ object SchubertFactory {
 	            _ =>
 	    		time { SchubertFactory.schubertPolynomial(Vector(9, 3, 5, 1, 10, 2, 4, 8, 6, 7)) }
 	    		)
-	    println(SchubertFactory.schubertPolynomial(Vector(1,4,3,2)))
-	    println(SchubertFactory.schubertPolynomial(Vector(2,4,1,3)))
-	    println(SchubertFactory.schubertPolynomial(Vector(1,3,4,2)))
-	    println(SchubertFactory.schubertPolynomial(Vector(1,4,2,3)))
-	    println(SchubertFactory.schubertPolynomial(Vector(1,2,3,4)))
-	    println(SchubertFactory.schubertPolynomial(Vector(2,1,3,4)))
-	    println(SchubertFactory.schubertPolynomial(Vector(4,3,2,1)))
+	    println(polyToString(SchubertFactory.schubertPolynomial(Vector(1,4,3,2))))
+	    println(polyToString(SchubertFactory.schubertPolynomial(Vector(2,4,1,3))))
+	    println(polyToString(SchubertFactory.schubertPolynomial(Vector(1,3,4,2))))
+	    println(polyToString(SchubertFactory.schubertPolynomial(Vector(1,4,2,3))))
+	    println(polyToString(SchubertFactory.schubertPolynomial(Vector(1,2,3,4))))
+	    println(polyToString(SchubertFactory.schubertPolynomial(Vector(2,1,3,4))))
+	    println(polyToString(SchubertFactory.schubertPolynomial(Vector(4,3,2,1))))
 	}
 }
