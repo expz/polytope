@@ -174,7 +174,7 @@ object SchubertFactory {
 	    result
 	}
 	def test() = {
-		/*
+		
 	    Vector.range(0, 20).foreach(
 	            _ =>
 	    		time { SchubertFactory.schubertPolynomial(Vector(3, 1, 4, 5, 2)) }
@@ -209,14 +209,7 @@ object SchubertFactory {
 	    println(polyToString(SchubertFactory.schubertPolynomial(Vector(1,2,3,4))))
 	    println(polyToString(SchubertFactory.schubertPolynomial(Vector(2,1,3,4))))
 	    println(polyToString(SchubertFactory.schubertPolynomial(Vector(4,3,2,1))))
-	    * 
-	    */
-		Vector.range(0, 10).foreach( _ => {
-		    time { SchubertFactory.schubertPolynomial(Vector(9, 3, 5, 1, 10, 2, 4, 8, 6, 7)) }
-		    time { SchubertFactory.schubertPolynomial(Vector(8, 2, 4, 9, 1, 10, 3, 6, 7, 5)) }
-		    time { SchubertFactory.schubertPolynomial(Vector(9, 1, 3, 4, 2, 10, 7, 8, 6, 5)) }
-		    time { SchubertFactory.schubertPolynomial(Vector(6, 2, 3, 7, 1, 4, 8, 10, 5, 9)) }
-	    })
+
 	    
 	    val shortmed = Vector(
 	    		Vector[Byte](2, 1),
@@ -282,8 +275,10 @@ object SchubertFactory {
 			}
 		}
 		
+		/*
 		testPerms(shortmed)
 		testPerms(med)
 		testPerms(long)
+		*/
 	}
 }
