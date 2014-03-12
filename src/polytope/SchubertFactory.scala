@@ -1,9 +1,8 @@
 package polytope
 
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.HashSet
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 import scala.collection.immutable.Vector
+import scala.collection.mutable.HashMap
 
 object Main {
 	def main(args: Array[String]) {
@@ -22,8 +21,9 @@ object Main {
  *  TODO How much memory does each node have?
  *  TODO If I run 8 copies of the algorithm, one per core, will the node run out of memory? If so, should I parallelize the algorithm?
  */
+
 object SchubertFactory {
-	type Polynomial = HashMap[Long, Int]
+	type Polynomial = ArrayBuffer[Long]
 	type Term = Long
 	type Permutation = Vector[Byte]
 	
@@ -37,36 +37,51 @@ object SchubertFactory {
 	    }} 
 	}
 	
-	def addInPlace(p1: Polynomial, p2: Polynomial) = {
-		p2.foreach(kv => p1(kv._1) = p1.getOrElse(kv._1, 0) + kv._2)
-	}
-	def addInPlace(p1: Polynomial, t: Term) = {
-		p1(t) = p1.getOrElse(t, 0) + 1
-	}
+	@inline
+	def addInPlace(p1: Polynomial, p2: Polynomial) = p1.appendAll(p2)
+	
+	@inline
+	def addInPlace(p1: Polynomial, t: Term) = p1.append(t)
+	
+	@inline
 	def isZero(p: Polynomial): Boolean = {
-		for (t <- p.keys) {
-			if (t != 0L && p(t) != 0) return false
+		for (t <- p) {
+			if (t != 0L) return false
 		}
 		return true
 	}
-	def polyToString(p: Polynomial): String = {	
+	
+	@inline
+	def collectTerms(p: Polynomial): HashMap[Long, Int] = {
+		val hm = HashMap[Long,Int]()
+		p.foreach(t => hm(t) = hm.getOrElse(t, 0) + 1)
+		return hm
+	}
+	
+	def polyToString(p: Polynomial): StringBuilder = {
 		if (isZero(p)) "0"
-		p.foldLeft("")((s,kv) => {
-			if (s != "") {
-				if (kv._2 != 1) s + " + " + kv._2.toString + "*" + termToString(kv._1)
-				else s + " + " + termToString(kv._1)
+		hashMapToString(collectTerms(p))
+	}
+	
+	def hashMapToString(hm: HashMap[Term, Int]): StringBuilder = {
+		hm.foldLeft(new StringBuilder)((s,kv) => {
+			if (s.size != 0) {
+				if (kv._2 != 1) s.appendAll(" + " + kv._2.toString + "*" + termToString(kv._1))
+				else s.appendAll(" + " + termToString(kv._1))
 			} 
 			else {
-				if(kv._2 != 1) kv._2.toString + "*" + termToString(kv._1)
-				else termToString(kv._1)
+				if(kv._2 != 1) s.appendAll(kv._2.toString + "*" + termToString(kv._1))
+				else s.appendAll(termToString(kv._1))
 			}
+			s
 		})
 	}
+	
 	def isIdentity(perm: Permutation): Boolean = {
 	    var i: Int = 0
 	    while (i < perm.length) {
+	        if (perm(i) != i+1) return false
 	        i += 1
-	        if (perm(i) != i) return false
 	    }
 	    return true
 	}
@@ -108,13 +123,14 @@ object SchubertFactory {
 	// Makes no attempt to check that the Permutation is actually a Permutation
 	// i.e., that it contains every number 1..n exactly once
 	def schubertPolynomial(perm: Permutation): Polynomial = { 
-	    if (isIdentity(perm)) return HashMap[Term, Int]()
+	    if (isIdentity(perm)) return ArrayBuffer[Term]()
 	    
 	    val leadFactor: Term = 0L
 	    return schubertAlgorithm(leadFactor, 0, perm.length-1, perm)
 	}
-	def schubertAlgorithm(leadFactor: Term, index: Int, exponent: Int, perm: Permutation): Polynomial = {
-		val result = HashMap[Term, Int]()
+	def schubertAlgorithm(leadFactor: Term, index: Int, exponent: Int, perm: Permutation): Polynomial = {		
+		// The code actually runs slower when you only define result when its needed
+		val result = ArrayBuffer[Term]()
 		
 		// Set limits of the optimized code
 		/*
@@ -124,14 +140,14 @@ object SchubertFactory {
 		*/
 		if (perm.length == 2) {
 			if (perm(0) == 2) {
-				addInPlace(result, incExp(leadFactor, index))
+				result.append(incExp(leadFactor, index))
 			} else {
-				addInPlace(result, leadFactor)
+				result.append(leadFactor)
 			}
 		} else if (perm(0) == perm.length) {
 		    val newPerm: Permutation = perm.drop(1)
 		    val newLeadFactor: Term = changeExp(leadFactor, index, exponent)
-		    addInPlace(result, schubertAlgorithm(newLeadFactor, index+1, newPerm.length - 1, newPerm))
+		    return schubertAlgorithm(newLeadFactor, index+1, newPerm.length - 1, newPerm)
 		} else {
 		    var max: Int = perm.length + 1
 		    var i: Int = 1
@@ -157,7 +173,8 @@ object SchubertFactory {
 	    println("Elapsed time: " + Math.round((t1 - t0)/1000.0) + "μs")
 	    result
 	}
-	def test() = {	    
+	def test() = {
+		/*
 	    Vector.range(0, 20).foreach(
 	            _ =>
 	    		time { SchubertFactory.schubertPolynomial(Vector(3, 1, 4, 5, 2)) }
@@ -192,5 +209,81 @@ object SchubertFactory {
 	    println(polyToString(SchubertFactory.schubertPolynomial(Vector(1,2,3,4))))
 	    println(polyToString(SchubertFactory.schubertPolynomial(Vector(2,1,3,4))))
 	    println(polyToString(SchubertFactory.schubertPolynomial(Vector(4,3,2,1))))
+	    * 
+	    */
+		Vector.range(0, 10).foreach( _ => {
+		    time { SchubertFactory.schubertPolynomial(Vector(9, 3, 5, 1, 10, 2, 4, 8, 6, 7)) }
+		    time { SchubertFactory.schubertPolynomial(Vector(8, 2, 4, 9, 1, 10, 3, 6, 7, 5)) }
+		    time { SchubertFactory.schubertPolynomial(Vector(9, 1, 3, 4, 2, 10, 7, 8, 6, 5)) }
+		    time { SchubertFactory.schubertPolynomial(Vector(6, 2, 3, 7, 1, 4, 8, 10, 5, 9)) }
+	    })
+	    
+	    val shortmed = Vector(
+	    		Vector[Byte](2, 1),
+	    		Vector[Byte](3, 2, 1),
+	    		Vector[Byte](4, 3, 2, 1),
+	    		Vector[Byte](5, 4, 3, 1, 2),
+	    		Vector[Byte](6, 5, 4, 1, 2, 3),
+	    		Vector[Byte](7, 6, 5, 1, 2, 3, 4),
+	    		Vector[Byte](8, 7, 6, 1, 2, 3, 5, 4),
+	    		Vector[Byte](9, 8, 7, 1, 2, 3, 6, 5, 4),
+	    		Vector[Byte](10, 9, 8, 1, 2, 3, 7, 6, 5, 4),
+	    		Vector[Byte](11, 10, 9, 1, 2, 3, 8, 7, 6, 4, 5),
+	    		Vector[Byte](12, 11, 10, 1, 2, 3, 9, 8, 7, 4, 5, 6),
+	    		Vector[Byte](13, 12, 11, 1, 2, 3, 10, 9, 8, 4, 5, 6, 7),
+	    		Vector[Byte](14, 13, 12, 1, 2, 3, 11, 10, 9, 4, 5, 6, 8, 7),
+	    		Vector[Byte](15, 14, 13, 1, 2, 3, 12, 11, 10, 4, 5, 6, 9, 8, 7),
+	    		Vector[Byte](16, 15, 14, 1, 2, 3, 13, 12, 11, 4, 5, 6, 10, 9, 8, 7)
+	    		)
+	    val med = Vector(
+	    		Vector[Byte](2, 1),
+	    		Vector[Byte](3, 2, 1),
+	    		Vector[Byte](4, 3, 1, 2),
+	    		Vector[Byte](5, 4, 1, 2, 3),
+	    		Vector[Byte](6, 5, 1, 2, 4, 3),
+	    		Vector[Byte](7, 6, 1, 2, 5, 4, 3),
+	    		Vector[Byte](8, 7, 1, 2, 6, 5, 3, 4),
+	    		Vector[Byte](9, 8, 1, 2, 7, 6, 3, 4, 5),
+	    		Vector[Byte](10, 9, 1, 2, 8, 7, 3, 4, 6, 5),
+	    		Vector[Byte](11, 10, 1, 2, 9, 8, 3, 4, 7, 6, 5),
+	    		Vector[Byte](12, 11, 1, 2, 10, 9, 3, 4, 8, 7, 5, 6),
+	    		Vector[Byte](13, 12, 1, 2, 11, 10, 3, 4, 9, 8, 5, 6, 7),
+	    		Vector[Byte](14, 13, 1, 2, 12, 11, 3, 4, 10, 9, 5, 6, 8, 7),
+	    		Vector[Byte](15, 14, 1, 2, 13, 12, 3, 4, 11, 10, 5, 6, 9, 8, 7),
+	    		Vector[Byte](16, 15, 1, 2, 14, 13, 3, 4, 12, 11, 5, 6, 10, 9, 7, 8)
+	    		)
+	    val long = Vector(
+	    		Vector[Byte](2, 1),
+	    		Vector[Byte](3, 1, 2),
+	    		Vector[Byte](4, 1, 3, 2),
+	    		Vector[Byte](5, 1, 4, 2, 3),
+	    		Vector[Byte](6, 1, 5, 2, 4, 3),
+	    		Vector[Byte](7, 1, 6, 2, 5, 3, 4),
+	    		Vector[Byte](8, 1, 7, 2, 6, 3, 5, 4),
+	    		Vector[Byte](9, 1, 8, 2, 7, 3, 6, 4, 5),
+	    		Vector[Byte](10, 1, 9, 2, 8, 3, 7, 4, 6, 5),
+	    		Vector[Byte](11, 1, 10, 2, 9, 3, 8, 4, 7, 5, 6),
+	    		Vector[Byte](12, 1, 11, 2, 10, 3, 9, 4, 8, 5, 7, 6),
+	    		Vector[Byte](13, 1, 12, 2, 11, 3, 10, 4, 9, 5, 8, 6, 7),
+	    		Vector[Byte](14, 1, 13, 2, 12, 3, 11, 4, 10, 5, 9, 6, 8, 7),
+	    		Vector[Byte](15, 1, 14, 2, 13, 3, 12, 4, 11, 5, 10, 6, 9, 7, 8),
+	    		Vector[Byte](16, 1, 15, 2, 14, 3, 13, 4, 12, 5, 11, 6, 10, 7, 9, 8)
+	    		)
+	    
+	    def testPerm(p: Permutation) = {
+			val result = time { SchubertFactory.schubertPolynomial(p) }
+			println("ArrayBuffer Length: " + result.length)
+			println("Number of Terms: " + collectTerms(result).size)
+		}
+		
+		def testPerms(ps: Vector[Permutation]) = {
+			for (k <- (0 to 11)) {
+				testPerm(ps(k))
+			}
+		}
+		
+		testPerms(shortmed)
+		testPerms(med)
+		testPerms(long)
 	}
 }
