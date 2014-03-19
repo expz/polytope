@@ -1,0 +1,688 @@
+Elapsed time: 34520μs
+Elapsed time: 1282μs
+Elapsed time: 475μs
+Elapsed time: 510μs
+Elapsed time: 494μs
+Elapsed time: 495μs
+Elapsed time: 504μs
+Elapsed time: 496μs
+Elapsed time: 503μs
+Elapsed time: 507μs
+Elapsed time: 501μs
+Elapsed time: 500μs
+Elapsed time: 496μs
+Elapsed time: 544μs
+Elapsed time: 612μs
+Elapsed time: 539μs
+Elapsed time: 557μs
+Elapsed time: 512μs
+Elapsed time: 502μs
+Elapsed time: 516μs
+===
+Elapsed time: 197380μs
+Elapsed time: 61373μs
+Elapsed time: 219565μs
+Elapsed time: 2450μs
+Elapsed time: 6491μs
+Elapsed time: 15371μs
+Elapsed time: 171393μs
+Elapsed time: 2599μs
+Elapsed time: 7647μs
+Elapsed time: 16068μs
+Elapsed time: 127715μs
+Elapsed time: 2675μs
+Elapsed time: 6904μs
+Elapsed time: 19656μs
+Elapsed time: 217597μs
+Elapsed time: 2706μs
+Elapsed time: 7030μs
+Elapsed time: 15932μs
+Elapsed time: 114490μs
+Elapsed time: 2439μs
+Elapsed time: 7007μs
+Elapsed time: 15583μs
+Elapsed time: 196350μs
+Elapsed time: 2531μs
+Elapsed time: 8524μs
+Elapsed time: 17491μs
+Elapsed time: 109381μs
+Elapsed time: 2628μs
+Elapsed time: 6625μs
+Elapsed time: 15473μs
+Elapsed time: 113882μs
+Elapsed time: 2838μs
+Elapsed time: 7582μs
+Elapsed time: 16134μs
+Elapsed time: 119936μs
+Elapsed time: 2335μs
+Elapsed time: 7016μs
+Elapsed time: 15133μs
+Elapsed time: 102291μs
+Elapsed time: 2447μs
+====
+Elapsed time: 165μs
+Elapsed time: 70μs
+Elapsed time: 69μs
+Elapsed time: 64μs
+Elapsed time: 64μs
+Elapsed time: 63μs
+Elapsed time: 75μs
+Elapsed time: 64μs
+Elapsed time: 63μs
+Elapsed time: 64μs
+Elapsed time: 63μs
+Elapsed time: 63μs
+Elapsed time: 63μs
+Elapsed time: 64μs
+Elapsed time: 65μs
+Elapsed time: 35μs
+Elapsed time: 28μs
+Elapsed time: 28μs
+Elapsed time: 28μs
+Elapsed time: 28μs
+Elapsed time: 13776μs
+Elapsed time: 6704μs
+Elapsed time: 6533μs
+Elapsed time: 6549μs
+Elapsed time: 6594μs
+Elapsed time: 6592μs
+Elapsed time: 6680μs
+Elapsed time: 8164μs
+Elapsed time: 6609μs
+Elapsed time: 6521μs
+Elapsed time: 6683μs
+Elapsed time: 6599μs
+Elapsed time: 6560μs
+Elapsed time: 6595μs
+Elapsed time: 6534μs
+Elapsed time: 7611μs
+Elapsed time: 7666μs
+Elapsed time: 6518μs
+Elapsed time: 6511μs
+Elapsed time: 6650μs
+ListBuffer((1,Vector(2, 1, 0)), (1,Vector(2, 0, 1)), (1,Vector(1, 2, 0)), (1,Vector(1, 1, 1)), (1,Vector(0, 2, 1)))
+ListBuffer((1,Vector(2, 1, 0)), (1,Vector(1, 2, 0)))
+ListBuffer((1,Vector(1, 1, 0)), (1,Vector(1, 0, 1)), (1,Vector(0, 1, 1)))
+ListBuffer((1,Vector(2, 0, 0)), (1,Vector(1, 1, 0)), (1,Vector(0, 2, 0)))
+ListBuffer((1,Vector(0, 0, 0)))
+ListBuffer((1,Vector(1, 0, 0)))
+ListBuffer((1,Vector(3, 2, 1)))
+
+=====================
+
+Elapsed time: 7955μs
+Elapsed time: 975μs
+Elapsed time: 936μs
+Elapsed time: 930μs
+Elapsed time: 918μs
+Elapsed time: 943μs
+Elapsed time: 923μs
+Elapsed time: 920μs
+Elapsed time: 921μs
+Elapsed time: 954μs
+Elapsed time: 929μs
+Elapsed time: 928μs
+Elapsed time: 934μs
+Elapsed time: 923μs
+Elapsed time: 924μs
+Elapsed time: 930μs
+Elapsed time: 939μs
+Elapsed time: 909μs
+Elapsed time: 822μs
+Elapsed time: 874μs
+===
+Elapsed time: 523715μs
+Elapsed time: 64429μs
+Elapsed time: 300072μs
+Elapsed time: 5885μs
+Elapsed time: 17726μs
+Elapsed time: 55150μs
+Elapsed time: 280508μs
+Elapsed time: 5365μs
+Elapsed time: 15646μs
+Elapsed time: 41192μs
+Elapsed time: 299655μs
+Elapsed time: 5241μs
+Elapsed time: 14549μs
+Elapsed time: 41946μs
+Elapsed time: 262706μs
+Elapsed time: 8658μs
+Elapsed time: 24285μs
+Elapsed time: 63796μs
+Elapsed time: 271319μs
+Elapsed time: 5356μs
+Elapsed time: 14665μs
+Elapsed time: 38839μs
+Elapsed time: 246762μs
+Elapsed time: 5090μs
+Elapsed time: 14338μs
+Elapsed time: 39286μs
+Elapsed time: 252723μs
+Elapsed time: 5142μs
+Elapsed time: 14317μs
+Elapsed time: 38800μs
+Elapsed time: 260887μs
+Elapsed time: 5842μs
+Elapsed time: 16416μs
+Elapsed time: 44485μs
+Elapsed time: 269013μs
+Elapsed time: 5978μs
+Elapsed time: 15032μs
+Elapsed time: 39859μs
+Elapsed time: 253778μs
+Elapsed time: 5885μs
+====
+Elapsed time: 329μs
+Elapsed time: 77μs
+Elapsed time: 75μs
+Elapsed time: 71μs
+Elapsed time: 69μs
+Elapsed time: 73μs
+Elapsed time: 68μs
+Elapsed time: 69μs
+Elapsed time: 73μs
+Elapsed time: 69μs
+Elapsed time: 68μs
+Elapsed time: 68μs
+Elapsed time: 68μs
+Elapsed time: 68μs
+Elapsed time: 69μs
+Elapsed time: 71μs
+Elapsed time: 68μs
+Elapsed time: 68μs
+Elapsed time: 69μs
+Elapsed time: 68μs
+Elapsed time: 21114μs
+Elapsed time: 14685μs
+Elapsed time: 15471μs
+Elapsed time: 14686μs
+Elapsed time: 15269μs
+Elapsed time: 14882μs
+Elapsed time: 15095μs
+Elapsed time: 16017μs
+Elapsed time: 15142μs
+Elapsed time: 16018μs
+Elapsed time: 14772μs
+Elapsed time: 14673μs
+Elapsed time: 14587μs
+Elapsed time: 14551μs
+Elapsed time: 16132μs
+Elapsed time: 15638μs
+Elapsed time: 14997μs
+Elapsed time: 15686μs
+Elapsed time: 17942μs
+Elapsed time: 14637μs
+x0^2*x2 + x1^2*x2 + x0*x1*x2 + x0^2*x1 + x0*x1^2
+x0^2*x1 + x0*x1^2
+x0*x1 + x1*x2 + x0*x2
+x1^2 + x0*x1 + x0^2
+
+x0
+x0^3*x1^2*x2
+
+======================
+Timing for unwrapped-collections
+
+Elapsed time: 9737μs
+Elapsed time: 2025μs
+Elapsed time: 941μs
+Elapsed time: 909μs
+Elapsed time: 906μs
+Elapsed time: 926μs
+Elapsed time: 875μs
+Elapsed time: 808μs
+Elapsed time: 808μs
+Elapsed time: 895μs
+Elapsed time: 892μs
+Elapsed time: 821μs
+Elapsed time: 828μs
+Elapsed time: 845μs
+Elapsed time: 807μs
+Elapsed time: 820μs
+Elapsed time: 851μs
+Elapsed time: 816μs
+Elapsed time: 858μs
+Elapsed time: 836μs
+===
+Elapsed time: 504295μs
+Elapsed time: 57071μs
+Elapsed time: 296676μs
+Elapsed time: 5322μs
+Elapsed time: 18122μs
+Elapsed time: 47874μs
+Elapsed time: 281261μs
+Elapsed time: 5095μs
+Elapsed time: 14178μs
+Elapsed time: 38256μs
+Elapsed time: 294799μs
+Elapsed time: 5126μs
+Elapsed time: 14009μs
+Elapsed time: 38203μs
+Elapsed time: 239817μs
+Elapsed time: 5026μs
+Elapsed time: 20808μs
+Elapsed time: 58856μs
+Elapsed time: 280064μs
+Elapsed time: 4970μs
+Elapsed time: 14067μs
+Elapsed time: 37756μs
+Elapsed time: 240157μs
+Elapsed time: 5241μs
+Elapsed time: 14420μs
+Elapsed time: 41081μs
+Elapsed time: 241775μs
+Elapsed time: 5029μs
+Elapsed time: 14128μs
+Elapsed time: 37913μs
+Elapsed time: 240772μs
+Elapsed time: 5286μs
+Elapsed time: 14591μs
+Elapsed time: 38266μs
+Elapsed time: 242033μs
+Elapsed time: 4985μs
+Elapsed time: 14116μs
+Elapsed time: 38878μs
+Elapsed time: 238198μs
+Elapsed time: 4981μs
+====
+Elapsed time: 128μs
+Elapsed time: 38μs
+Elapsed time: 38μs
+Elapsed time: 37μs
+Elapsed time: 71μs
+Elapsed time: 69μs
+Elapsed time: 69μs
+Elapsed time: 68μs
+Elapsed time: 68μs
+Elapsed time: 69μs
+Elapsed time: 68μs
+Elapsed time: 68μs
+Elapsed time: 68μs
+Elapsed time: 68μs
+Elapsed time: 68μs
+Elapsed time: 69μs
+Elapsed time: 68μs
+Elapsed time: 68μs
+Elapsed time: 68μs
+Elapsed time: 68μs
+Elapsed time: 25542μs
+Elapsed time: 13891μs
+Elapsed time: 17513μs
+Elapsed time: 13982μs
+Elapsed time: 15664μs
+Elapsed time: 15509μs
+Elapsed time: 14581μs
+Elapsed time: 13947μs
+Elapsed time: 13941μs
+Elapsed time: 14233μs
+Elapsed time: 13871μs
+Elapsed time: 15923μs
+Elapsed time: 14434μs
+Elapsed time: 14188μs
+Elapsed time: 13875μs
+Elapsed time: 13973μs
+Elapsed time: 13962μs
+Elapsed time: 14097μs
+Elapsed time: 14470μs
+Elapsed time: 15660μs
+x0^2*x2 + x1^2*x2 + x0*x1*x2 + x0^2*x1 + x0*x1^2
+x0^2*x1 + x0*x1^2
+x0*x1 + x1*x2 + x0*x2
+x1^2 + x0*x1 + x0^2
+
+x0
+x0^3*x1^2*x2
+
+=======================
+user@gk:~/src/semdb/schubert$ scala
+Welcome to Scala version 2.10.3 (OpenJDK Server VM, Java 1.7.0_51).
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala> def time[A](a: => A) = {
+     | val start = System.nanoTime
+     | val result = a
+     | val micros = (System.nanoTime - start) / 1000
+     | println("%d microseconds".format(micros))
+     | result
+     | }
+time: [A](a: => A)A
+
+scala> import scala.collection.mutable._
+import scala.collection.mutable._
+
+scala> val lb1: ListBuffer[Int] = (1 to 100000).to[ListBuffer]
+lb1: scala.collection.mutable.ListBuffer[Int] = ListBuffer(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 
+
+scala> val lb2: ListBuffer[Int] = (1 to 100000).to[ListBuffer]
+lb2: scala.collection.mutable.ListBuffer[Int] = ListBuffer(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 
+
+scala> val ab1: ArrayBuffer[Int] = (1 to 100000).to[ArrayBuffer]
+ab1: scala.collection.mutable.ArrayBuffer[Int] = ArrayBuffer(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 
+
+scala> val ab2: ArrayBuffer[Int] = (1 to 100000).to[ArrayBuffer]
+ab2: scala.collection.mutable.ArrayBuffer[Int] = ArrayBuffer(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 
+
+scala> for(i <- (1 to 10)) {
+     | time(lb1.appendAll(lb2))
+     | }
+6205 microseconds
+6126 microseconds
+6207 microseconds
+6301 microseconds
+6175 microseconds
+6135 microseconds
+6158 microseconds
+6111 microseconds
+6103 microseconds
+245379 microseconds
+
+scala> for(i <- (1 to 10)) {
+     | time(ab1.appendAll(ab2))
+     | }
+716 microseconds
+115 microseconds
+1370 microseconds
+122 microseconds
+118 microseconds
+116 microseconds
+4722 microseconds
+167 microseconds
+137 microseconds
+150 microseconds
+
+=======================
+Wrapped collections (ListBuffer) were a tiny bit slower (0.5%?) than unwrapped collections
+
+==============
+With ArrayBuffer
+
+Elapsed time: 13820μs
+Elapsed time: 480μs
+Elapsed time: 463μs
+Elapsed time: 481μs
+Elapsed time: 503μs
+Elapsed time: 465μs
+Elapsed time: 462μs
+Elapsed time: 461μs
+Elapsed time: 492μs
+Elapsed time: 462μs
+Elapsed time: 494μs
+Elapsed time: 476μs
+Elapsed time: 489μs
+Elapsed time: 470μs
+Elapsed time: 2301μs
+Elapsed time: 430μs
+Elapsed time: 422μs
+Elapsed time: 425μs
+Elapsed time: 462μs
+Elapsed time: 475μs
+===
+Elapsed time: 208735μs
+Elapsed time: 58761μs
+Elapsed time: 129981μs
+Elapsed time: 4105μs
+Elapsed time: 16591μs
+Elapsed time: 20664μs
+Elapsed time: 97872μs
+Elapsed time: 4748μs
+Elapsed time: 13532μs
+Elapsed time: 26620μs
+Elapsed time: 93419μs
+Elapsed time: 2088μs
+Elapsed time: 6152μs
+Elapsed time: 13132μs
+Elapsed time: 111872μs
+Elapsed time: 4105μs
+Elapsed time: 11843μs
+Elapsed time: 26576μs
+Elapsed time: 90029μs
+Elapsed time: 2289μs
+Elapsed time: 5878μs
+Elapsed time: 13219μs
+Elapsed time: 86277μs
+Elapsed time: 2192μs
+Elapsed time: 5952μs
+Elapsed time: 13054μs
+Elapsed time: 121429μs
+Elapsed time: 3733μs
+Elapsed time: 12339μs
+Elapsed time: 23954μs
+Elapsed time: 91380μs
+Elapsed time: 2419μs
+Elapsed time: 6841μs
+Elapsed time: 13204μs
+Elapsed time: 83290μs
+Elapsed time: 2282μs
+Elapsed time: 6119μs
+Elapsed time: 14185μs
+Elapsed time: 84366μs
+Elapsed time: 2357μs
+====
+Elapsed time: 219μs
+Elapsed time: 60μs
+Elapsed time: 96μs
+Elapsed time: 57μs
+Elapsed time: 56μs
+Elapsed time: 55μs
+Elapsed time: 56μs
+Elapsed time: 55μs
+Elapsed time: 56μs
+Elapsed time: 56μs
+Elapsed time: 56μs
+Elapsed time: 56μs
+Elapsed time: 55μs
+Elapsed time: 55μs
+Elapsed time: 55μs
+Elapsed time: 56μs
+Elapsed time: 57μs
+Elapsed time: 57μs
+Elapsed time: 55μs
+Elapsed time: 55μs
+Elapsed time: 16529μs
+Elapsed time: 6346μs
+Elapsed time: 6095μs
+Elapsed time: 6136μs
+Elapsed time: 6325μs
+Elapsed time: 6092μs
+Elapsed time: 6634μs
+Elapsed time: 5890μs
+Elapsed time: 6009μs
+Elapsed time: 5974μs
+Elapsed time: 5945μs
+Elapsed time: 6113μs
+Elapsed time: 5932μs
+Elapsed time: 5938μs
+Elapsed time: 6003μs
+Elapsed time: 5996μs
+Elapsed time: 5970μs
+Elapsed time: 10366μs
+Elapsed time: 8078μs
+Elapsed time: 5989μs
+x0^2*x2 + x1^2*x2 + x0*x1*x2 + x0^2*x1 + x0*x1^2
+x0^2*x1 + x0*x1^2
+x0*x1 + x1*x2 + x0*x2
+x1^2 + x0*x1 + x0^2
+
+x0
+x0^3*x1^2*x2
+
+================================
+Optimized ArrayBuffer
+
+Elapsed time: 13541μs
+Elapsed time: 939μs
+Elapsed time: 408μs
+Elapsed time: 410μs
+Elapsed time: 408μs
+Elapsed time: 408μs
+Elapsed time: 408μs
+Elapsed time: 408μs
+Elapsed time: 421μs
+Elapsed time: 407μs
+Elapsed time: 409μs
+Elapsed time: 406μs
+Elapsed time: 412μs
+Elapsed time: 470μs
+Elapsed time: 405μs
+Elapsed time: 429μs
+Elapsed time: 409μs
+Elapsed time: 463μs
+Elapsed time: 503μs
+Elapsed time: 419μs
+===
+Elapsed time: 228567μs
+Elapsed time: 59027μs
+Elapsed time: 112212μs
+Elapsed time: 4475μs
+Elapsed time: 17186μs
+Elapsed time: 19818μs
+Elapsed time: 91240μs
+Elapsed time: 4469μs
+Elapsed time: 11388μs
+Elapsed time: 29934μs
+Elapsed time: 137655μs
+Elapsed time: 2351μs
+Elapsed time: 6390μs
+Elapsed time: 12416μs
+Elapsed time: 105060μs
+Elapsed time: 4241μs
+Elapsed time: 11044μs
+Elapsed time: 34807μs
+Elapsed time: 94455μs
+Elapsed time: 2252μs
+Elapsed time: 6370μs
+Elapsed time: 13379μs
+Elapsed time: 87389μs
+Elapsed time: 1994μs
+Elapsed time: 6036μs
+Elapsed time: 12743μs
+Elapsed time: 118345μs
+Elapsed time: 4774μs
+Elapsed time: 29754μs
+Elapsed time: 28811μs
+Elapsed time: 115765μs
+Elapsed time: 2385μs
+Elapsed time: 5676μs
+Elapsed time: 12206μs
+Elapsed time: 79290μs
+Elapsed time: 1977μs
+Elapsed time: 6143μs
+Elapsed time: 12275μs
+Elapsed time: 80440μs
+Elapsed time: 2270μs
+====
+Elapsed time: 232μs
+Elapsed time: 59μs
+Elapsed time: 95μs
+Elapsed time: 54μs
+Elapsed time: 53μs
+Elapsed time: 54μs
+Elapsed time: 53μs
+Elapsed time: 53μs
+Elapsed time: 53μs
+Elapsed time: 52μs
+Elapsed time: 53μs
+Elapsed time: 57μs
+Elapsed time: 53μs
+Elapsed time: 55μs
+Elapsed time: 53μs
+Elapsed time: 53μs
+Elapsed time: 53μs
+Elapsed time: 53μs
+Elapsed time: 53μs
+Elapsed time: 53μs
+Elapsed time: 13509μs
+Elapsed time: 6581μs
+Elapsed time: 5933μs
+Elapsed time: 6010μs
+Elapsed time: 6027μs
+Elapsed time: 5923μs
+Elapsed time: 6425μs
+Elapsed time: 5717μs
+Elapsed time: 5812μs
+Elapsed time: 5921μs
+Elapsed time: 5818μs
+Elapsed time: 5753μs
+Elapsed time: 5863μs
+Elapsed time: 5861μs
+Elapsed time: 6013μs
+Elapsed time: 5860μs
+Elapsed time: 5869μs
+Elapsed time: 6729μs
+Elapsed time: 6956μs
+Elapsed time: 5847μs
+x0^2*x2 + x1^2*x2 + x0*x1*x2 + x0^2*x1 + x0*x1^2
+x0^2*x1 + x0*x1^2
+x0*x1 + x1*x2 + x0*x2
+x1^2 + x0*x1 + x0^2
+
+x0
+x0^3*x1^2*x2
+
+================
+Test for improving bit level operations
+
+incExp2 is *slower*! (On 32-bit machine)
+
+scala> def incExp(t: Long, i: Int): Long = t + (1L << i*4)
+incExp: (t: Long, i: Int)Long
+
+scala> def incExp2(t: Long, i: Int): Long = t + (1L << i << i << i << i)
+incExp2: (t: Long, i: Int)Long
+
+scala> def returnTime[A](a: => A): Long = {
+     | val start = System.nanoTime
+     | val result = a
+     | val micros = (System.nanoTime - start)/1000
+     | micros
+     | }
+returnTime: [A](a: => A)Long
+
+scala> def test1(A: Int, B: Int): Long = { var tot = 0L; var count = 0; for (k <- (1 to A)) { val t = returnTime(for (k <- (1 to B)) { incExp(k, k % 10) }); if (k > 1 && (count == 0 || t < 1.5*(tot/count))) { count += 1; tot += t} }; return tot/count }
+test1: (A: Int, B: Int)Long
+
+scala> def test2(A: Int, B: Int): Long = { var tot = 0L; var count = 0; for (k <- (1 to A)) { val t = returnTime(for (k <- (1 to B)) { incExp2(k, k % 10) }); if (k > 1 && (count == 0 || t < 1.5*(tot/count))) { count += 1; tot += t} }; return tot/count }
+test2: (A: Int, B: Int)Long
+
+scala> test1(50, 100000)
+res39: Long = 3187
+
+scala> test2(50, 100000)
+res40: Long = 3368
+
+=============================
+See Excel File for systematic analysis of ArrayBuffer algorithm times
+
+==============================
+
+scala> nanoTime { ab.map( _ => 0) }
+459276 nanoseconds
+
+
+==============================
+
+scala> time { println(s"test $i") }
+test 10
+170 microseconds
+
+scala> time { println("test " + i) }
+test 10
+135 microseconds
+
+scala> def hello(s: String) = s"Hello ${s}"
+hello: (s: String)String
+
+scala> time { hello("world") }
+29 microseconds
+res15: String = Hello world
+
+scala> def hello2(s: String) = "Hello " + s
+hello2: (s: String)String
+
+scala> time { hello2("world") }
+14 microseconds
+res18: String = Hello world
+
+
+
