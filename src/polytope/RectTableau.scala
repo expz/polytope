@@ -1,5 +1,16 @@
 package polytope
 
+/*
+ * The RectTableau class requires that the environment variable LD_LIBRARY_PATH
+ * be set to the directory containing liblpsolve55j.so due to its dependence
+ * on lpsolve.
+ * 
+ * It requires different lpsolve libraries for 32-bit and 64-bit 
+ * implementations.
+ * 
+ * Perhaps fix library with: execstack -c <libfile>
+ */
+
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
 
@@ -111,22 +122,19 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
     val pairs = Array.tabulate[Array[Int]](rows+cols-1)(i => Array(i+1, i+2))
     // add order condition
     solver.addConstraintex(rows + cols, Array[Double](1.0, -1.0, 1.0, -1.0), Array(1, 2, 3, 4), LpSolve.GE, eps)
-    /*
+    
     for (i <- 1 to rows-1)
       solver.addConstraintex(rows + cols, 
-                             a, 
-                             pairs(i), 
+                             Array(1.0, -1.0, 0.0), 
+                             Array(i, i+1, rows+1), 
                              LpSolve.GE, 
                              eps)
     for (i <- 1 to cols-1)
       solver.addConstraintex(rows + cols, 
-                             a, 
-                             pairs(rows+i), 
+                             Array(1.0, -1.0, 0.0), 
+                             Array(rows+i, rows+i+1, 1), 
                              LpSolve.GE, 
                              eps)
-                             * 
-                             */
-
     // add order condition  
     for (i <- 1 to rows) {
       for (j <- 1 to cols) {
