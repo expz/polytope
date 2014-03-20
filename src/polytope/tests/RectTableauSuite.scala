@@ -1,5 +1,6 @@
 package polytope.tests
 
+
 import org.junit.runner.RunWith
 
 import org.scalatest._
