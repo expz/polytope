@@ -16,6 +16,23 @@ import scala.collection.mutable.ListBuffer
 
 import lpsolve._
 
+import com.sun.jna.{Library, Native, Platform}
+import java.math._
+
+trait CLibrary extends Library {
+  def puts(s: String)
+}
+object CLibrary {
+  def Instance = Native.loadLibrary("c", classOf[CLibrary]).asInstanceOf[CLibrary]
+}
+trait LpSolve extends Library {
+  def make_lp(rows: Int, cols: Int)
+}
+
+object LpSolve {
+  def Instance = Native.loadLibrary("liblpsolve55", classOf[LpSolve]).asInstanceOf[LpSolve]
+}
+
 class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
   def this(rows: Int, cols: Int) = this(rows, cols, 
       ArrayBuffer.tabulate[Int](rows*cols)(k => k/cols + 1))
@@ -98,12 +115,14 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
 
   def isAdmissible: Boolean = {  
     // Define MIP
-    val solver = LpSolve.makeLp(0, rows + cols)
+    CLibrary.Instance.puts("Hello world!")
+    //val solver = LpSolve.Instance.make_lp(0, rows+cols)
+    //val solver = LpSolve.makeLp(0, rows + cols)
     
     // Makes building a model row by row faster
     // WARNING: This caused a memory fault
     // solver.setAddRowmode(true)
-    
+    /*
     // Consider quantities less than 0.1 to be zero
     solver.setEpsb(0.1)
     // solver.setEpsel(0.1)
@@ -118,9 +137,8 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
     val varlist = (1 to rows + cols).toArray
     sum.appendAll(ArrayBuffer.fill[Double](cols)(-1.0))
     solver.addConstraint(sum.toArray, LpSolve.EQ, 0)
-    val a = Array[Double](1.0, -1.0)
-    val pairs = Array.tabulate[Array[Int]](rows+cols-1)(i => Array(i+1, i+2))
     // add order condition
+    
     solver.addConstraintex(rows + cols, Array[Double](1.0, -1.0, 1.0, -1.0), Array(1, 2, 3, 4), LpSolve.GE, eps)
     
     for (i <- 1 to rows-1)
@@ -161,8 +179,8 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
 
     // delete the problem and free memory
     solver.deleteLp();
-    
-    return result
+    */
+    return true //result
   }
 }
 
