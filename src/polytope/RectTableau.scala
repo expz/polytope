@@ -12,6 +12,11 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
   val matrixForm = new ArrayBuffer[ArrayBuffer[Int]]()
   
   /*
+   * getRow() -- Return the row containing the cell labeled by n.
+   */
+  def getRow(n: Int) = tableau(n)
+  
+  /*
    * @param k Label of cell of tableau
    * 
    * @result  Row and column in which the cell labeled by k lies
@@ -34,7 +39,7 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
       var i = 0
       while (i < rows) { matrixForm += ArrayBuffer[Int](); i += 1 }
       i = 0
-      while (i < rows*cols) { matrixForm(tableau(i)).append(i+1); i += 1 }
+      while (i < rows*cols) { matrixForm(tableau(i)-1).append(i+1); i += 1 }
     }
     matrixForm
   }
@@ -65,57 +70,79 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
     P.intersection(new PolyhedralCone(Array[Array[Int]](), ieqs.result))
   }
   
-  def isTrivial = {
+  /*
+   * isTrivial -- True if the tableau is labeled row-by-row sequentially 
+   */
+  def isTrivial: Boolean = {
+    if (rows*cols == 0) return true
     var i = 0
     while (i < rows*cols) { 
-      if (tableau(i) != i/cols + 1) false
+      if (tableau(i) != i/cols + 1) {
+        return false
+      }
       i += 1
     }
-    true
+    return true
   }
 
-  def isAdmissible = {  
+  def isAdmissible: Boolean = {  
     // Define MIP
     val solver = LpSolve.makeLp(0, rows + cols)
     
     // Makes building a model row by row faster
-    solver.setAddRowmode(true)
+    // WARNING: This caused a memory fault
+    // solver.setAddRowmode(true)
+    
     // Consider quantities less than 0.1 to be zero
     solver.setEpsb(0.1)
     // solver.setEpsel(0.1)
+    
     // Break at first solution
     solver.setBreakAtFirst(true)
     
     val eps = 0.1
-    // add constraints
-    
-    // set objective function
-    //solver.strSetObjFn("2 3 -2 3")
         
     // Add constraint that A variables minus B variables is zero
     val sum = ArrayBuffer.fill[Double](rows)(1.0)
     val varlist = (1 to rows + cols).toArray
     sum.appendAll(ArrayBuffer.fill[Double](cols)(-1.0))
     solver.addConstraint(sum.toArray, LpSolve.EQ, 0)
-    
+    val a = Array[Double](1.0, -1.0)
+    val pairs = Array.tabulate[Array[Int]](rows+cols-1)(i => Array(i+1, i+2))
     // add order condition
+    solver.addConstraintex(rows + cols, Array[Double](1.0, -1.0, 1.0, -1.0), Array(1, 2, 3, 4), LpSolve.GE, eps)
+    /*
     for (i <- 1 to rows-1)
-      solver.addConstraintex(rows + cols, Array(1, -1), Array(i, i+1), LpSolve.GE, eps)
+      solver.addConstraintex(rows + cols, 
+                             a, 
+                             pairs(i), 
+                             LpSolve.GE, 
+                             eps)
     for (i <- 1 to cols-1)
-      solver.addConstraintex(rows + cols, Array(1, -1), Array(rows+i, rows+i+1), LpSolve.GE, eps)
-    
-    // add order condition
+      solver.addConstraintex(rows + cols, 
+                             a, 
+                             pairs(rows+i), 
+                             LpSolve.GE, 
+                             eps)
+                             * 
+                             */
+
+    // add order condition  
     for (i <- 1 to rows) {
       for (j <- 1 to cols) {
         for (k <- 1 to rows) {
           for (l <- 1 to cols) {
             if (this.toMatrix(i)(j) < this.toMatrix(k)(l))
-              solver.addConstraintex(rows + cols, Array(1, -1, 1, -1), Array(i, k, rows+j, rows+l), LpSolve.GE, eps)
+              solver.addConstraintex(rows + cols, 
+                                     Array[Double](1.0, -1.0, 1.0, -1.0), 
+                                     Array(i, k, rows+j, rows+l), 
+                                     LpSolve.GE, 
+                                     eps)
           }
         }
       }
     }
-    
+    println(a)
     //solver.setPresolve(LpSolve.PRESOLVE_ROWS + LpSolve.PRESOLVE_COLS, 0)
         
     // Solve the problem
@@ -127,7 +154,7 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
     // delete the problem and free memory
     solver.deleteLp();
     
-    result
+    return result
   }
 }
 
@@ -147,7 +174,27 @@ object RectTableau {
     tableau_vector[j]<tableau_vector[j-1].
     l will correspond to the shape of T_j
     */
-    def calcSubTabShape {
+    // Initialize to the trivially sequential tableau
+    var T = new RectTableau(rows, 
+                            cols, 
+                            ArrayBuffer.tabulate[Int](rows*cols)(
+                                n => (n % rows) + 1))
+    
+    if (rows == 1 || cols == 1) return ListBuffer(T)
+    val size = rows*cols
+    var listTableaux = ListBuffer[RectTableau]()
+    var subTabHeight = 0
+    var nextRow = 0
+    
+    var i, m, r = 0
+    var subTabSize = 0
+    
+    // Initialize subTabShape to the correct length
+    val subTabShape = ArrayBuffer.fill[Int](size)(0)
+    
+    // Separate part of the algorithm into a function so that the second while
+    // loop can be broken by a return statement.
+    def calcSubTabShape(): Unit = {
       // Initialize subTabShape to [1, 0, ...]
       subTabShape(0) = 1
       i = 1
@@ -158,43 +205,32 @@ object RectTableau {
       // Calculate subTabShape
       i = 1; subTabSize = 0
       while (i < size) {
-        subTabShape(T(i)) += 1
-        if (T(i) < T(i-1)) {
+        subTabShape(T.getRow(i)) += 1
+        if (T.getRow(i) < T.getRow(i-1)) {
           subTabSize = i
           return
         }
         i += 1
       }
     }
-  
-    
-    // Initialize to the trivially sequential tableau
-    var T = new RectTableau(rows, cols)
-    
-    if (rows == 1 || cols == 1) return ListBuffer(T)
-    val size = rows*cols
-    var listTableaux = ListBuffer[RectTableau]()
-    val subTabShape = ArrayBuffer.fill[Int](size)(0)
-    var i, m, r = 0
-    var subTabSize = 0
-    var subTabHeight = 0
-    var nextRow = 0
+         
     do {
-    
-    // Find the last nonzero row of l and store it in k
-    i = size - 1
-    while ( subTabShape(i) == 0 ) i -= 1
-    subTabHeight = i
-    
-    // Find a new row for the largest element of the subtableau (next lowest corner)
-    nextRow = subTabShape(T(subTabSize) + 1)
-    i = subTabHeight
-    while (subTabShape(i) != nextRow) i -= 1
-    
-    // Move subTabSize to row i
-    T.update(subTabSize, i)
-    subTabShape(i) -= 1
-    // Fill in the columns of T_j using 1,...,j-1 in increasing order
+      calcSubTabShape()
+      
+      // Find the last nonzero row of l and store it in k
+      i = size - 1
+      while ( subTabShape(i) == 0 ) i -= 1
+      subTabHeight = i
+      
+      // Find a new row for the largest element of the subtableau (next lowest corner)
+      nextRow = subTabShape(T.getRow(subTabSize) + 1)
+      i = subTabHeight
+      while (subTabShape(i) != nextRow) i -= 1
+      
+      // Move subTabSize to row i
+      T.update(subTabSize, i)
+      subTabShape(i) -= 1
+      // Fill in the columns of T_j using 1,...,j-1 in increasing order
       m = 0
       while (m < subTabSize) {
         r = 0
@@ -204,7 +240,6 @@ object RectTableau {
           m += 1
           r += 1
         }
-        i -= 1
       }
       listTableaux.prepend(T)
     } while (!T.isTrivial)

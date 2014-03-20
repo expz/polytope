@@ -198,7 +198,7 @@ def delta(u: Permutation, hm: HashMap[Long, Int], offset: Int)
     f = deltaF
     k += 1
   }
-  return df
+  return f
 }
 
 @inline
