@@ -39,8 +39,9 @@ object InequalityFactory {
         f.remove(term)
     }
     val f2 = delta(v, f, T.rows)
+    println(f2)
     assert(isInteger(f2))
-    return f2(0L)
+    return f2.getOrElse(0L, 0)
   }
 }
 

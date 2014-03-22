@@ -14,9 +14,11 @@ package polytope
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
 
-import lpsolve._
+//import lpsolve._
 
-import com.sun.jna.{Library, Native, Platform}
+
+/*
+import com.sun.jna.{Library, Native, Platform, Structure}
 import java.math._
 
 trait CLibrary extends Library {
@@ -25,13 +27,33 @@ trait CLibrary extends Library {
 object CLibrary {
   def Instance = Native.loadLibrary("c", classOf[CLibrary]).asInstanceOf[CLibrary]
 }
-trait LpSolve extends Library {
-  def make_lp(rows: Int, cols: Int)
+*/
+
+/*
+ * 
+import _root_.net.java.dev.sna.SNA
+
+class lprec( var crashmode: Int = 0) extends Structure
+
+object LpSolve extends SNA {
+  //def Instance = Native.loadLibrary("lpsolve55", classOf[LpSolve]).asInstanceOf[LpSolve]
+  snaLibrary = "lpsolve55"
+  val make_lp = SNA[Int, Int, lprec]
+  
+  def makeLp(rows: Int, cols: Int) = {
+    var r = rows
+    var c = cols
+    val lp = make_lp(r, c)
+    println(lp)
+  }
 }
 
-object LpSolve {
-  def Instance = Native.loadLibrary("liblpsolve55", classOf[LpSolve]).asInstanceOf[LpSolve]
+trait LpSolve extends Library {
+  def make_lp(rows: Int, cols: Int): lprec
+  
 }
+*/
+  
 
 class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
   def this(rows: Int, cols: Int) = this(rows, cols, 
@@ -42,7 +64,7 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
   /*
    * getRow() -- Return the row containing the cell labeled by n.
    */
-  def getRow(n: Int) = tableau(n)
+  def getRowOf(n: Int) = tableau(n-1)
   
   /*
    * @param k Label of cell of tableau
@@ -60,8 +82,10 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
     (row, col) 
   }
 
-  def update(index: Int, newVal: Int) = { tableau(index) = newVal }
+  def updateRow(label: Int, newRow: Int) = { tableau(label-1) = newRow }
 
+  def copy(): RectTableau = new RectTableau(rows, cols, tableau.clone())
+  
   def toMatrix = {
     if (matrixForm.length == 0) {
       var i = 0
@@ -75,8 +99,11 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
   def toCone = {
     assert(rows > 0)
     assert(cols > 0)
-    val P = PolyhedralCone.positiveWeylChamber(rows + cols, 0, rows).intersection(
-          PolyhedralCone.positiveWeylChamber(rows + cols, rows, cols))
+    val P = PolyhedralCone.positiveWeylChamber(rows + cols, 0, rows).
+            intersection(
+              PolyhedralCone.positiveWeylChamber(rows + cols, rows, cols)
+            )
+            
     val ieqs = Array.newBuilder[Array[Int]]
     val ieq = ArrayBuffer.fill[Int](rows + cols)(0)
     for (i <- 0 to rows-1) {
@@ -115,8 +142,10 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
 
   def isAdmissible: Boolean = {  
     // Define MIP
-    CLibrary.Instance.puts("Hello world!")
+    //CLibrary.Instance.puts("Hello world!")
+    
     //val solver = LpSolve.Instance.make_lp(0, rows+cols)
+    //println(solver.crashmode)
     //val solver = LpSolve.makeLp(0, rows + cols)
     
     // Makes building a model row by row faster
@@ -139,7 +168,11 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
     solver.addConstraint(sum.toArray, LpSolve.EQ, 0)
     // add order condition
     
-    solver.addConstraintex(rows + cols, Array[Double](1.0, -1.0, 1.0, -1.0), Array(1, 2, 3, 4), LpSolve.GE, eps)
+    solver.addConstraintex(rows + cols, 
+                           Array[Double](1.0, -1.0, 1.0, -1.0), 
+                           Array(1, 2, 3, 4), 
+                           LpSolve.GE, 
+                           eps)
     
     for (i <- 1 to rows-1)
       solver.addConstraintex(rows + cols, 
@@ -186,7 +219,8 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
 
 object RectTableau {
   def apply(rows: Int, cols: Int) = new RectTableau(rows, cols)
-  def apply(rows: Int, cols: Int, tableau: ArrayBuffer[Int]) = new RectTableau(rows, cols, tableau)
+  def apply(rows: Int, cols: Int, tableau: ArrayBuffer[Int]) 
+    = new RectTableau(rows, cols, tableau)
   
   def standardTableaux(rows: Int, cols: Int): ListBuffer[RectTableau] = {
     /*
@@ -200,15 +234,15 @@ object RectTableau {
     tableau_vector[j]<tableau_vector[j-1].
     l will correspond to the shape of T_j
     */
-    // Initialize to the trivially sequential tableau
+    // Initialize to the vertically sequential tableau
     var T = new RectTableau(rows, 
-                            cols, 
+                            cols,
                             ArrayBuffer.tabulate[Int](rows*cols)(
                                 n => (n % rows) + 1))
     
-    if (rows == 1 || cols == 1) return ListBuffer(T)
+    var listTableaux = ListBuffer[RectTableau](T.copy())
+    if (rows <= 1 || cols <= 1) return listTableaux
     val size = rows*cols
-    var listTableaux = ListBuffer[RectTableau]()
     var subTabHeight = 0
     var nextRow = 0
     
@@ -223,51 +257,55 @@ object RectTableau {
     def calcSubTabShape(): Unit = {
       // Initialize subTabShape to [1, 0, ...]
       subTabShape(0) = 1
-      i = 1
-      while (i < size) {
-        subTabShape(i) = 0
-        i += 1
+      var j = 1
+      while (j < size) {
+        subTabShape(j) = 0
+        j += 1
       }
       // Calculate subTabShape
-      i = 1; subTabSize = 0
-      while (i < size) {
-        subTabShape(T.getRow(i)) += 1
-        if (T.getRow(i) < T.getRow(i-1)) {
-          subTabSize = i
+      subTabSize = 1
+      j = 2
+      while (j <= size) {
+        subTabShape(T.getRowOf(j)-1) += 1
+        if (T.getRowOf(j) < T.getRowOf(j-1)) {
+          subTabSize = j
           return
         }
-        i += 1
+        j += 1
       }
     }
-         
+
     do {
       calcSubTabShape()
       
       // Find the last nonzero row of l and store it in k
       i = size - 1
-      while ( subTabShape(i) == 0 ) i -= 1
-      subTabHeight = i
+      while (subTabShape(i) == 0) i -= 1
+      subTabHeight = i+1
       
-      // Find a new row for the largest element of the subtableau (next lowest corner)
-      nextRow = subTabShape(T.getRow(subTabSize) + 1)
-      i = subTabHeight
+      // Find a new row for the largest element of the subtableau 
+      // (next lowest corner)
+      nextRow = subTabShape(T.getRowOf(subTabSize))
+      //i = subTabHeight
       while (subTabShape(i) != nextRow) i -= 1
       
-      // Move subTabSize to row i
-      T.update(subTabSize, i)
+      // Move label subTabSize to row i+1
+      T.updateRow(subTabSize, i+1)
       subTabShape(i) -= 1
+      
+      // WARNING: T must be allowed to temporarily be a non-tableau for the updates to work
       // Fill in the columns of T_j using 1,...,j-1 in increasing order
-      m = 0
+      m = 1
       while (m < subTabSize) {
-        r = 0
-        while (subTabShape(r) != 0) {
-          T.update(m, r)
-          subTabShape(r) -= 1
+        r = 1
+        while (subTabShape(r-1) != 0) {
+          T.updateRow(m, r)
+          subTabShape(r-1) -= 1
           m += 1
           r += 1
         }
       }
-      listTableaux.prepend(T)
+      listTableaux.prepend(T.copy())
     } while (!T.isTrivial)
     return listTableaux
   }
