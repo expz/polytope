@@ -8,29 +8,36 @@ object PermutationFactory {
     distinctShuffleProduct((w1 ++ w2.map(k => k + w1.length)).to[ArrayBuffer], w1.length)
   }
   
+  /*
+   * distinctShuffleProduct  Shuffles product of two permutations, all of whose
+   *                         labels are unique
+   */
   def distinctShuffleProduct[A](seq: ArrayBuffer[A], left: Int)
     (implicit T: ClassTag[A]): ArrayBuffer[Array[A]] = {
-    val ab = ArrayBuffer[Array[A]]()
-    if (left == 0) return ArrayBuffer(seq.toArray[A])
+    val ab = ArrayBuffer[Array[A]](seq.toArray[A])
+    if (left == 0) return ab
     for (leftShift <- 1 to left) {
       val temp = seq(left-leftShift)
       seq(left-leftShift) = seq(left-leftShift+1)
       seq(left-leftShift+1) = temp
-      ab += seq.toArray
       if (seq.length > left+1)
         distinctShuffleProduct(seq.drop(left-leftShift+1), leftShift).foreach(
             a => ab += (seq.take(left-leftShift+1).toArray ++ a)
             )
+      else
+        ab += seq.toArray
     }
     return ab
   }
   
   def shuffles(mults: Array[Int]): ArrayBuffer[Permutation] = {
-    val S1 = ArrayBuffer[Permutation]((1 to mults(0)).toArray)
     val S2 = ArrayBuffer[Permutation]()
+    if (mults.length == 0) return S2
+    val S1 = ArrayBuffer[Permutation]((1 to mults(0)).toArray)
     var i = 1
-    var odd = true
+    var odd = false
     while (i < mults.length) {
+      odd = !odd      
       if (odd) {
         S2.clear()
         for (w <- S1) {
@@ -42,13 +49,13 @@ object PermutationFactory {
           S1 ++= shiftedShuffleProduct(w, (1 to mults(i)).toArray)  // shuffle product of [1, ..., mults[i]]
         }
       }
-      odd = !odd
+      i += 1
     }
     if (odd) return S2
     else return S1
   }
   
-  def shuffles_of_given_length(mults: Array[Int], numInversions: Int): ArrayBuffer[Permutation] = {
+  def shufflesOfGivenLength(mults: Array[Int], numInversions: Int): ArrayBuffer[Permutation] = {
     val perms = ArrayBuffer[Permutation]()
     val n = mults.sum    // Length of permutations (Number of symbols)
     val dontPass = ArrayBuffer[Int]()

@@ -14,6 +14,13 @@ type Polynomial = ArrayBuffer[Long]
  */
 type Permutation = Array[Int]
 
+def main(args: Array[String]) {
+  println(PermutationFactory.shuffles(Array(1)).length)
+  //val perm = SchubertFactory.readPermutation()
+  //val perm = Vector(3, 1, 4, 2) 
+  //SchubertFactory.test()
+}
+
 def act[A](p: Permutation, a: Array[A])(implicit tag: ClassTag[A]): Array[A] = {
   val pa = ArrayBuffer[A]()
   var i = 0
@@ -47,12 +54,12 @@ def toLehmerCode(p: Permutation): ArrayBuffer[Int] = {
   
   val code = ArrayBuffer[Int]()
   val checked = ArrayBuffer.fill[Int](p.length)(1)
-  i = 0
-  while (i < p.length) {
-    k = p(i)
+  var j = 0
+  while (j < p.length) {
+    k = p(j)
     checked(k-1) = 0
     code += sum(checked.take(k))
-    i += 1
+    j += 1
   }
   return code
 }
@@ -79,7 +86,7 @@ def isInteger(f: Polynomial): Boolean = {
 def isInteger(f: HashMap[Long, Int]): Boolean = {
   if (f.isEmpty) return true
   var i = 0
-  f.values.foreach( v => if (v != 0) return false )
+  f.foreach( keyVal => if (keyVal._1 != 0L && keyVal._2 != 0) return false )
   return true
 }
 
@@ -184,19 +191,19 @@ def delta(u: Permutation, hm: HashMap[Long, Int], offset: Int)
       d = getExp(m, k-1) - getExp(m, k)
       if (d > 0) {
         for (j <- 0 until d) {
-          newTerm = addToExp(addToExp(addToExp(m, k-1, -d), k-1, i), k, d-1-i)
+          newTerm = addToExp(addToExp(m, k-1, -d+j), k, d-1-j)
           deltaF(newTerm) = deltaF.getOrElse(newTerm, 0) + coeff
         }
       } else if (d < 0) {
         d = -d
         for (j <- 0 until d) {
-          newTerm = addToExp(addToExp(addToExp(m, k, -d), k-1, j), k, d-1-j) 
-          deltaF(newTerm) = deltaF.getOrElse(newTerm, 0) - coeff
+          newTerm = addToExp(addToExp(m, k, -1-j), k-1, j) 
+          deltaF(newTerm) = deltaF.getOrElse(newTerm, 0) + coeff
         }
       }
     }
     f = deltaF
-    k += 1
+    i += 1
   }
   return f
 }
@@ -233,17 +240,38 @@ def polyToLatex(p: Polynomial): StringBuilder = {
 }
 
 def hashMapToString(hm: HashMap[Term, Int]): StringBuilder = {
-  hm.foldLeft(new StringBuilder)((s,kv) => {
+  if (hm.isEmpty) return new StringBuilder("0")
+  val s = hm.foldLeft(new StringBuilder)((s,kv) => {
     if (s.size != 0) {
-      if (kv._2 != 1) s.appendAll(" + " + kv._2.toString + "*" + termToString(kv._1))
-      else s.appendAll(" + " + termToString(kv._1))
+      if (kv._2 != 0) { 
+        if (kv._2 != 1) {
+          s.appendAll(" + " + kv._2.toString)
+          if (kv._1 != 0L) s.appendAll("*" + termToString(kv._1))
+        }
+        else {
+          s.appendAll(" + ")
+          if (kv._1 != 0L) s.appendAll(termToString(kv._1))
+          else s.append('1')
+        }
+        
+      }
     } 
     else {
-      if(kv._2 != 1) s.appendAll(kv._2.toString + "*" + termToString(kv._1))
-      else s.appendAll(termToString(kv._1))
+      if (kv._2 != 0) {
+        if(kv._2 != 1) {
+          s.appendAll(kv._2.toString)
+          if (kv._1 != 0L) s.appendAll("*" + termToString(kv._1))
+        }
+        else {
+          if (kv._1 != 0L) s.appendAll(termToString(kv._1))
+          else s.append('1')
+        }
+      }
     }
     s
   })
+  if (s.length == 0) return new StringBuilder("0")
+  else return s
 }
 
 def hashMapToLatex(hm: HashMap[Term, Int]): StringBuilder = {
@@ -290,6 +318,7 @@ def addToExp(t: Term, varnum: Int, n: Int): Term = t + (n.toLong << varnum*4)
 @inline
 def changeExp(t: Term, i: Int, exp: Int): Term = (~(15L << i*4) & t) + (exp << i*4)
 
+// i = 0 gives the exponent of the first variable!
 @inline
 def getExp(t: Term, i: Int): Int = ((t >> i*4) & 15L).toInt
 
@@ -301,8 +330,8 @@ def termToString(t: Term): String = {
   var i = 0
   var s = ""
   while (i < 16) {
-    val exp = (t >> i*4) & 15L 
-    if (exp != 0L) {
+    val exp = getExp(t, i) 
+    if (exp != 0) {
       if (s != "") s += "*"
       s += "x" + i
       if (exp > 1)
@@ -327,12 +356,6 @@ def termToLatex(t: Term): String = {
     i += 1
   }
   return s
-}
-
-def main(args: Array[String]) {
-  //val perm = SchubertFactory.readPermutation()
-  val perm = Vector(3, 1, 4, 2) 
-  SchubertFactory.test()
 }
 
 
