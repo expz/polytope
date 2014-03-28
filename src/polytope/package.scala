@@ -21,17 +21,19 @@ def main(args: Array[String]) {
   //SchubertFactory.test()
 }
 
+def inverse(p: Permutation): Permutation 
+            = Array.tabulate[Int](p.length)(n => p.indexWhere(_ == n+1) + 1)
+
 def act[A](p: Permutation, a: Array[A])(implicit tag: ClassTag[A]): Array[A] = {
+  assert(a.length >= p.length)
   val pa = ArrayBuffer[A]()
   var i = 0
-  assert(a.length >= p.length)
   while (i < p.length) {
-    pa += a(p(i))
+    pa += a(p(i)-1)
     i += 1
   }
   return pa.toArray[A]
 }
-
 
 /*
  * toLehmerCode() -- Returns the Lehmer code of the permutation.
