@@ -1,54 +1,10 @@
 package polytope
 
-/*
- * The RectTableau class requires that the environment variable LD_LIBRARY_PATH
- * be set to the directory containing liblpsolve55j.so due to its dependence
- * on lpsolve.
- * 
- * It requires different lpsolve libraries for 32-bit and 64-bit 
- * implementations.
- * 
- * Perhaps fix library with: execstack -c <libfile>
- */
-
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConversions._
 
-//import lpsolve._
-
-
-/*
-import com.sun.jna.{Library, Native, Platform, Structure}
-import java.math._
-
-trait CLibrary extends Library {
-  def puts(s: String)
-}
-object CLibrary {
-  def Instance = Native.loadLibrary("c", classOf[CLibrary]).asInstanceOf[CLibrary]
-}
-*/
-
-import com.sun.jna.Structure
-import _root_.net.java.dev.sna.SNA
-import lpsolvelib._
-import scala.collection.mutable.ListBuffer
-
-object LpSolveLibrary extends SNA {
-  //def Instance = Native.loadLibrary("lpsolve55", classOf[LpSolve]).asInstanceOf[LpSolve]
-  snaLibrary = "lpsolve55"
-  val make_lp = SNA[Int, Int, lprec]
-  
-  def makeLp(rows: Int, cols: Int) = {
-    var r = rows
-    var c = cols
-    val lp = make_lp(r, c)
-    println(lp)
-  }
-}
-
-  
+import net.sf.javailp._
 
 class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
   def this(rows: Int, cols: Int) = this(rows, cols, 
@@ -157,80 +113,100 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
     return true
   }
   
+  /*
+   * isAdmissible -- Returns true if the RectTableau corresponds to a cubicle.
+   *                 This happens if its corresponding system of equations has
+   *                 a one-dimensional family of solutions. 
+   */
   def isAdmissible: Boolean = {
-    val solver = LpSolveLibrary.makeLp(rows, cols)
-    val x = new lprec
-    lprec.
-    /*
+    // FIXME!
+    if (rows == 0 || cols == 0) return true
+    if (rows == 1 || cols == 1) return true
+    
+    // Sanity check
+    if (!isStandardTableau) return false
+    
+    // Variables are numbered from 1
+    val varlist = ListBuffer.tabulate[java.lang.Object](rows+cols)(
+                                      n => n+1:java.lang.Integer)    
+    // Assumes that indices start at 1
+    def createLinear(length: Int, indices: Array[Int], coeffs: Array[Double]): Linear = {
+      return new Linear(ListBuffer.tabulate[java.lang.Double](length)(n => {
+                          val i = indices.indexWhere(_ == n+1)
+                          if (i >= 0) coeffs(i):java.lang.Double
+                          else 0.0:java.lang.Double
+                        }), varlist)
+    }
+    
     // Define MIP
-    //val solver = LpSolve.makeLp(0, rows + cols)
+    val problem = new Problem()
+    problem.setObjective(createLinear(rows+cols, Array(), Array()), 
+                         OptType.MAX)
     
-    // Makes building a model row by row faster
-    // WARNING: This caused a memory fault
-    // solver.setAddRowmode(true)
-    
-    // Consider quantities less than 0.1 to be zero
-    solver.setEpsb(0.1)
-    // solver.setEpsel(0.1)
-    
-    // Break at first solution
-    solver.setBreakAtFirst(true)
-    
+    // Relaxation
     val eps = 0.1
         
     // Add constraint that A variables minus B variables is zero
-    val sum = ArrayBuffer.fill[Double](rows)(1.0)
-    val varlist = (1 to rows + cols).toArray
-    sum.appendAll(ArrayBuffer.fill[Double](cols)(-1.0))
-    solver.addConstraint(sum.toArray, LpSolve.EQ, 0)
-    // add order condition
+    val sum = ListBuffer.fill[java.lang.Double](rows)(1.0)
+    sum.appendAll(ListBuffer.fill[java.lang.Double](cols)(-1.0))
+    problem.add(new Linear(sum, varlist), Operator.EQ, 0.0)
     
-    solver.addConstraintex(rows + cols, 
-                           Array[Double](1.0, -1.0, 1.0, -1.0), 
-                           Array(1, 2, 3, 4), 
-                           LpSolve.GE, 
-                           eps)
-    
+    // Add constraint that variables are ordered in a decreasing manner
     for (i <- 1 to rows-1)
-      solver.addConstraintex(rows + cols, 
-                             Array(1.0, -1.0, 0.0), 
-                             Array(i, i+1, rows+1), 
-                             LpSolve.GE, 
-                             eps)
+      problem.add(createLinear(rows + cols, Array(i, i+1), Array(1.0, -1.0)),  
+                  Operator.GE,
+                  eps)                
     for (i <- 1 to cols-1)
-      solver.addConstraintex(rows + cols, 
-                             Array(1.0, -1.0, 0.0), 
-                             Array(rows+i, rows+i+1, 1), 
-                             LpSolve.GE, 
-                             eps)
-    // add order condition  
+      problem.add(createLinear(rows + cols, 
+                               Array(rows+i, rows+i+1), Array(1.0, -1.0)),  
+                  Operator.GE,
+                  eps)
+
+    // Add conditions: a(i) + b(j) >= a(k) + b(l) + eps 
+    var varnames: Array[Int] = null
+    var coeffs: Array[Double] = null
     for (i <- 1 to rows) {
       for (j <- 1 to cols) {
         for (k <- 1 to rows) {
           for (l <- 1 to cols) {
-            if (this.toMatrix(i)(j) < this.toMatrix(k)(l))
-              solver.addConstraintex(rows + cols, 
-                                     Array[Double](1.0, -1.0, 1.0, -1.0), 
-                                     Array(i, k, rows+j, rows+l), 
-                                     LpSolve.GE, 
-                                     eps)
+            if (this.toMatrix(i-1)(j-1) < this.toMatrix(k-1)(l-1)) {
+              varnames = Array[Int]()
+              coeffs = Array[Double]()
+              if (i != k) {
+                varnames ++= Array(i, k)
+                coeffs ++= Array(1.0, -1.0)
+              }
+              if (j != l) {
+                varnames ++= Array(rows+j, rows+l)
+                coeffs ++= Array(1.0, -1.0)
+              }
+              if (varnames.length != 0)
+                problem.add(createLinear(rows + cols, varnames, coeffs), 
+                            Operator.GE,
+                            eps)
+            }
           }
         }
       }
     }
-    println(a)
-    //solver.setPresolve(LpSolve.PRESOLVE_ROWS + LpSolve.PRESOLVE_COLS, 0)
-        
-    // Solve the problem
-    solver.solve()
     
-    // Test whether the solution was empty
-    val result = (solver.getSolutioncount() > 0)
-
-    // delete the problem and free memory
-    solver.deleteLp();
-    */
-    return true //result
+    // Create a solver
+    val solverFactory = new SolverFactoryGLPK()
+    solverFactory.setParameter(Solver.VERBOSE, 1)    
+    val solver = solverFactory.get()
+    
+    // Solve the problem and store success in isAd
+    var isAd = false
+    try {
+      val result = solver.solve(problem)
+      // Tricky: Scala will continue executing this line before finishing the 
+      //         previous line unless this line depends on result
+      if (result != null) isAd = true
+    } catch {
+      case e: Exception => // The solver did not find a solution
+    }
+    
+    return isAd
   }
 }
 

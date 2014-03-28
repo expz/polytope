@@ -68,7 +68,7 @@ class RectTableauSuite extends UnitSpec {
   it should "recognize admissible tableaux." in {
     val t1 = RectTableau(3, 3, ArrayBuffer[Int](1, 2, 1, 2, 3, 3, 1, 2, 3))
     val t2 = RectTableau(3, 3, ArrayBuffer[Int](1, 1, 2, 2, 3, 1, 3, 2, 3))
-    val t3 = RectTableau(3, 3, ArrayBuffer[Int](1, 1, 2, 2, 3, 1, 3, 2, 3))
+    val t3 = RectTableau(3, 3, ArrayBuffer[Int](1, 2, 1, 1, 3, 2, 3, 2, 3))
     
     t1.isAdmissible should be (true)
     t2.isAdmissible should be (true)
@@ -85,9 +85,9 @@ class RectTableauSuite extends UnitSpec {
                                        ArrayBuffer(3, 4, 8), 
                                        ArrayBuffer(5, 7, 9)))
 
-    val t3 = RectTableau(3, 3, ArrayBuffer[Int](1, 1, 1, 2, 3, 2, 3, 2, 3))
-    t3.toMatrix should be (ArrayBuffer(ArrayBuffer(1, 2, 3),
-                                       ArrayBuffer(4, 6, 8),
+    val t3 = RectTableau(3, 3, ArrayBuffer[Int](1, 2, 1, 1, 3, 2, 3, 2, 3))
+    t3.toMatrix should be (ArrayBuffer(ArrayBuffer(1, 3, 4),
+                                       ArrayBuffer(2, 6, 8),
                                        ArrayBuffer(5, 7, 9)))
   }
   

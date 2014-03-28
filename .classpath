@@ -4,11 +4,13 @@
 	<classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/polco.jar"/>
 	<classpathentry kind="lib" path="lib/scalatest_2.10-2.1.0.jar"/>
-	<classpathentry kind="lib" path="lib/sna-4.1.0.jar"/>
-	<classpathentry kind="lib" path="lib/jna-platform-4.1.0.jar"/>
-	<classpathentry kind="lib" path="lib/lpsolve-5.5.2-32bit/out.jar"/>
+	<classpathentry kind="lib" path="lib/javailp-1.2a.jar"/>
+	<classpathentry kind="lib" path="lib/glpk-java-4.47.jar">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="polytope/lib"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/lpsolve-5.5.2-32bit"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
