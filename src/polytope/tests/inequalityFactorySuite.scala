@@ -22,4 +22,18 @@ class inequalityFactorySuite extends UnitSpec {
   }
   
   it should "correctly calculate non-trivial coefficients." is (pending)
+  
+  it should "convert inequalities to Latex." in {
+    val ieq1 = new Inequality(Array(1, 2), Array(2, 1), Array(3, 2, 4, 1), 
+                              new ABEdge(Array(1, 0, -1, 2), 2))
+    val ieq2 = new Inequality(Array(), Array(2, 1), Array(),
+                              new ABEdge(Array(0, -1), 0))
+    
+    ieq1.toLatex.replaceAll(" ", "") should be (
+           """$\lambda^A_1+2\lambda^B_1-\lambda^B_2\leq"""
+         + """3\lambda^{AB}_1-\lambda^{AB}_3+2\lambda^{AB}_4$""")
+    ieq2.toLatex.replaceAll(" ", "") should be ("""$-\lambda^B_1\leq0$""")
+  }
+  
+  it should "calculate 2x2x4 inequalities" is (pending) 
 }

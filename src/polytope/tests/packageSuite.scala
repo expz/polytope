@@ -87,9 +87,19 @@ class packageSuite extends UnitSpec {
     f1 should be (HashMap(17L->4))
   }
   
-  "collectTerms" should "collect terms into a HashMap." is (pending)
+  "collectTerms" should "collect terms into a HashMap." in {
+    val p1 = ArrayBuffer[Long]()
+    val p2 = ArrayBuffer(0L)
+    val p3 = ArrayBuffer(18L, 20L, 18L, 288L, 20L)
+    val p4 = ArrayBuffer(1L, 2L, 3L)
+    
+    collectTerms(p1) should be (HashMap[Long,Int]())
+    collectTerms(p2) should be (HashMap(0L->1))
+    collectTerms(p3) should be (HashMap(18L->2, 20L->2, 288L->1))
+    collectTerms(p4) should be (HashMap(1L->1, 2L->1, 3L->1))
+  }
   
-  "hashMapToString" should "return a string expressing a polynomial." in {
+  "hashMapToString" should "return a string expressing the polynomial in lexicographic order." in {
     val f1 = HashMap[Long,Int]()
     val f2 = HashMap(2L->0)
     val f3 = HashMap(0L->(-2))
@@ -101,6 +111,17 @@ class packageSuite extends UnitSpec {
     hashMapToString(f2).toString should be ("0")
     hashMapToString(f3).toString should be ("-2")
     hashMapToString(f4).toString should be ("3*x0^2")
+    // Lexicographic order
     hashMapToString(f5).toString should be ("x0 + x0*x1 + 3*x0*x1^2 + x0^2*x1^2")
+  }
+  
+  "inverse" should "invert a permutation." in {
+    val p1 = Array[Int]()
+    val p2 = Array(1)
+    val p3 = Array(2, 3, 1)
+    
+    inverse(p1).deep should be (Array[Int]().deep)
+    inverse(p2).deep should be (Array(1).deep)
+    inverse(p3).deep should be (Array(3, 1, 2).deep)
   }
 }
