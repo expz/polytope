@@ -14,8 +14,7 @@ import scala.collection.mutable.ArrayBuffer
 @RunWith(classOf[JUnitRunner])
 class inequalityFactorySuite extends UnitSpec {
   "InequalityFactory" should "correctly calculate trivial coefficients." in {
-    val c1 = InequalityFactory.c(
-                                 Array(1, 2), Array(1, 2), Array(1, 2, 3, 4), 
+    val c1 = InequalityFactory.c(Array(1, 2), Array(1, 2), Array(1, 2, 3, 4), 
                                  RectTableau(2, 2, ArrayBuffer(1, 1, 2, 2)))
 
     c1 should be (0)
@@ -35,5 +34,8 @@ class inequalityFactorySuite extends UnitSpec {
     ieq2.toLatex.replaceAll(" ", "") should be ("""$-\lambda^B_1\leq0$""")
   }
   
-  it should "calculate 2x2x4 inequalities" is (pending) 
+  it should "calculate 2x2x4 inequalities." in {
+    val ineqs = InequalityFactory.inequalities(2, 2)
+    println(ineqs.map(_.toLatex()))
+  } 
 }
