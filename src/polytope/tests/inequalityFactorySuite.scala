@@ -35,7 +35,15 @@ class inequalityFactorySuite extends UnitSpec {
   }
   
   it should "calculate 2x2x4 inequalities." in {
+    val (dimA, dimB) = (2, 2)
+    println(RectTableau.standardTableaux(dimA, dimB).filter(_.isAdmissible).length)
     val ineqs = InequalityFactory.inequalities(2, 2)
     println(ineqs.map(_.toLatex()))
   } 
+  
+  it should "calculate 3x3x9 inequalities." in {
+    
+    val ineqs = InequalityFactory.inequalities(3, 3)
+    println(ineqs.map(_.toLatex()))
+  }
 }

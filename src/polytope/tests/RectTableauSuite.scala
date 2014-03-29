@@ -75,7 +75,7 @@ class RectTableauSuite extends UnitSpec {
     t3.isAdmissible should be (false)
   }
   
-  it should "correctly convert a tableau to a matrix." in {
+  it should "convert a tableau to a matrix." in {
     val t1 = RectTableau(2, 2, ArrayBuffer[Int](1, 2, 1, 2))
     t1.toMatrix should be (ArrayBuffer(ArrayBuffer(1, 3), 
                                        ArrayBuffer(2, 4)))
@@ -91,7 +91,11 @@ class RectTableauSuite extends UnitSpec {
                                        ArrayBuffer(5, 7, 9)))
   }
   
-  it should "convert a tableau to a cone." is (pending)
+  it should "convert a tableau to a cone." in {
+    val t1 = RectTableau(3, 3, ArrayBuffer[Int](1, 1, 2, 2, 3, 1, 3, 2, 3))
+    println(t1.toCone)
+    println(t1.toCone.ieqs.length)
+  }
   
   "Standard Tableaux" should "enumerate the 2 standard 2x2 tableaux." in {
     val tblx = Set[ArrayBuffer[ArrayBuffer[Int]]](
