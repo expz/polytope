@@ -30,6 +30,12 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
     }
     return es
   }
+  
+  override def toString: String =
+    "PolyhedralCone\nEqualities\n" + 
+    eqs.map(a => "(" + a.mkString(", ") + ")").mkString("\n") + "\n" +
+    "Inequalities\n" + 
+    ieqs.map(a => "(" + a.mkString(", ") + ")").mkString("\n")
 }
 
 object PolyhedralCone {  

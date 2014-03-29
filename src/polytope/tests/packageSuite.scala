@@ -13,7 +13,7 @@ import scala.collection.mutable.HashMap
 
 @RunWith(classOf[JUnitRunner])
 class packageSuite extends UnitSpec {
-  "isInteger" should "work." in {
+  "isInteger" should "return true iff a polynomial is an integer." in {
     val b1 = isInteger(HashMap[Long,Int]())
     b1 should be (true)
     
@@ -33,11 +33,11 @@ class packageSuite extends UnitSpec {
     b6 should be (false)
   }
   
-  "toLehmerCode" should "work." in {
-    val lc1 = polytope.toLehmerCode(Array[Int]())
-    val lc2 = polytope.toLehmerCode(Array(1))
-    val lc3 = polytope.toLehmerCode(Array(1, 2, 3))
-    val lc4 = polytope.toLehmerCode(Array(3, 1, 4, 2))
+  "toLehmerCode" should "convert a permutation to a Lehmer code." in {
+    val lc1 = toLehmerCode(Array[Int]())
+    val lc2 = toLehmerCode(Array(1))
+    val lc3 = toLehmerCode(Array(1, 2, 3))
+    val lc4 = toLehmerCode(Array(3, 1, 4, 2))
     
     lc1.to[ArrayBuffer] should be (ArrayBuffer())
     lc2.to[ArrayBuffer] should be (ArrayBuffer(0))
@@ -46,9 +46,9 @@ class packageSuite extends UnitSpec {
   }
   
   "reducedWord" should "work for trivial permutations." in {
-    val rw1 = polytope.reducedWord(Array())
-    val rw2 = polytope.reducedWord(Array(1))
-    val rw3 = polytope.reducedWord(Array(1, 2, 3))
+    val rw1 = reducedWord(Array())
+    val rw2 = reducedWord(Array(1))
+    val rw3 = reducedWord(Array(1, 2, 3))
     
     rw1.deep should be (Array().deep)
     rw2.deep should be (Array().deep)
@@ -57,9 +57,9 @@ class packageSuite extends UnitSpec {
   
   // Note that the reduced word decomposition is not unique. Only its length is.
   it should "work for non-trivial permutations." in {
-    val rw1 = polytope.reducedWord(Array(2, 1))
-    val rw2 = polytope.reducedWord(Array(3, 2, 1))
-    val rw3 = polytope.reducedWord(Array(2, 4, 3, 1))
+    val rw1 = reducedWord(Array(2, 1))
+    val rw2 = reducedWord(Array(3, 2, 1))
+    val rw3 = reducedWord(Array(2, 4, 3, 1))
     
     rw1.deep should be (Array(1).deep)
     rw2.length should be (3)
@@ -68,10 +68,10 @@ class packageSuite extends UnitSpec {
   }
   
   "delta" should "be the identity for the identity permutation." in {
-    val f1 = polytope.delta(Array(), HashMap[Long, Int](), 0)
-    val f2 = polytope.delta(Array(), HashMap(2L->2, 17L->1), 0)
-    val f3 = polytope.delta(Array(1, 2, 3), HashMap[Long, Int](), 0)
-    val f4 = polytope.delta(Array(1, 2, 3), 
+    val f1 = delta(Array(), HashMap[Long, Int](), 0)
+    val f2 = delta(Array(), HashMap(2L->2, 17L->1), 0)
+    val f3 = delta(Array(1, 2, 3), HashMap[Long, Int](), 0)
+    val f4 = delta(Array(1, 2, 3), 
                             HashMap(3L->4, 0L->1, 18L->2, 260L->1), 
                             0)
     
@@ -82,9 +82,16 @@ class packageSuite extends UnitSpec {
   }
   
   "delta" should "work for non-trivial permutations." in {
-    val f1 = polytope.delta(Array(2, 1), HashMap(18L->2, 33L->2), 0)
+    // - x^2*y - x*y^2 
+    val f0 = delta(Array(2, 1), HashMap(18L->(-1), 33L->(-1)), 0)
+    // 2*x^2*y - 2*x*y^2
+    val f1 = delta(Array(2, 1), HashMap(18L->2, 33L->(-2)), 0)
+    // 2*x^2*y*z^2*w + 2*x^2*y*z*w^2
+    val f2 = delta(Array(2, 1), HashMap(4626L->2, 8466L->2), 2)
     
+    isZero(f0) should be (true)
     f1 should be (HashMap(17L->4))
+    isZero(f2) should be (true)
   }
   
   "collectTerms" should "collect terms into a HashMap." in {
@@ -99,14 +106,20 @@ class packageSuite extends UnitSpec {
     collectTerms(p4) should be (HashMap(1L->1, 2L->1, 3L->1))
   }
   
-  "hashMapToString" should "return a string expressing the polynomial in lexicographic order." in {
+  "subst" should "substitute x(i) + y(j) into a polynomial" + 
+                 " according to a tableau T(k) = (i, j)." in {
+    val f1 = HashMap()
+    
+  }
+  
+  "hashMapToString" should "return a string expressing a polynomial" + 
+                           " in lexicographic order." in {
     val f1 = HashMap[Long,Int]()
     val f2 = HashMap(2L->0)
     val f3 = HashMap(0L->(-2))
     val f4 = HashMap(2L->3)
     val f5 = HashMap(1L->1, 17L->1, 33L->3, 34L->1)
     
-    println(hashMapToString(f5))
     hashMapToString(f1).toString should be ("0")
     hashMapToString(f2).toString should be ("0")
     hashMapToString(f3).toString should be ("-2")

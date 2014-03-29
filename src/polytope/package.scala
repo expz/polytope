@@ -92,6 +92,12 @@ def isInteger(f: HashMap[Long, Int]): Boolean = {
   return true
 }
 
+def isZero(f: HashMap[Long, Int]): Boolean = {
+  if (f.isEmpty) return true
+  f.foreach( keyVal => if (keyVal._2 != 0) return false)
+  return true
+}
+
 /*
  * subst() -- Substitute x_i + y_j for z_T(i,j) where T is a rectangular tableau
  * 
@@ -174,33 +180,48 @@ def delta(u: Permutation, hm: HashMap[Long, Int], offset: Int)
     : HashMap[Long, Int] = {
   assert(offset >= 0)
   assert(u.length + offset <= 16)
+  
+  // The successive finite differences are stored in f and deltaF
   var f = hm
-  var deltaF: HashMap[Long, Int] = null // = HashMap[Long, Int]()
-  val trans = reducedWord(u)
-  //trans.reverse()
-  var i = 0
-  var k = 0
-  var d = 0
- 
-  var coeff = 0
+  var deltaF: HashMap[Long, Int] = null
+  
+  // Convert the permutation to a sequence of transpositions of the form (i,i+1)
+  // The permutations are interpreted as applying to the variables beginning
+  // with offset
+  val trans = reducedWord(u).map(_ + offset)
+  
+  // loop variables
+  var (i, k, d, coeff) = (0, 0, 0, 0)
   var newTerm = 0L
+  
+  // Loop through each transposition
   while (i < trans.length) {
-    k = trans(i) + offset
+    // k is indexed from 1
+    k = trans(i)
+    
+    // Assign a new polynomial to deltaF
     deltaF = HashMap[Long, Int]()
+    
+    // If f is now an integer, then we're done
     if (isInteger(f)) return deltaF
-    for (m <- f.keys) {
-      coeff = f(m)
-      d = getExp(m, k-1) - getExp(m, k)
+    
+    // Calculate the finite difference for each monomial separately
+    for (monom <- f.keys) {
+      coeff = f(monom)
+      // Calculate the difference between the exponents of x[k] and x[k+1]
+      d = getExp(monom, k-1) - getExp(monom, k)
       if (d > 0) {
+        // One monomial becomes d monomials
         for (j <- 0 until d) {
-          newTerm = addToExp(addToExp(m, k-1, -d+j), k, d-1-j)
+          newTerm = addToExp(addToExp(monom, k-1, -d+j), k, d-1-j)
           deltaF(newTerm) = deltaF.getOrElse(newTerm, 0) + coeff
         }
       } else if (d < 0) {
         d = -d
+        // One monomial becomes d monomials
         for (j <- 0 until d) {
-          newTerm = addToExp(addToExp(m, k, -1-j), k-1, j) 
-          deltaF(newTerm) = deltaF.getOrElse(newTerm, 0) + coeff
+          newTerm = addToExp(addToExp(monom, k, -1-j), k-1, j) 
+          deltaF(newTerm) = deltaF.getOrElse(newTerm, 0) - coeff
         }
       }
     }

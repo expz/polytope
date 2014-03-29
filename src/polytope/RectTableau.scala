@@ -50,25 +50,30 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
   def toCone = {
     assert(rows > 0)
     assert(cols > 0)
+    // Initialize the cone with the intersection of positive Weyl chambers
     val P = PolyhedralCone.positiveWeylChamber(rows + cols, 0, rows).
             intersection(
               PolyhedralCone.positiveWeylChamber(rows + cols, rows, cols)
             )
-            
+    // Initialize the inequality list to be empty
     val ieqs = Array.newBuilder[Array[Int]]
+    // Initialize the inequality to be 0 >= 0
     val ieq = ArrayBuffer.fill[Int](rows + cols)(0)
+    // Loop through every quadruple (a[i], b[j], a[k], b[l])
     for (i <- 0 to rows-1) {
       for (j <- 0 to cols-1) {
         for (k <- 0 to rows-1) {
           for (l <- 0 to cols-1) {
-            ieq.update(i, 1)
-            ieq.update(rows + j, 1)
-            ieq(k) -= 1
-            ieq(cols + l) -= 1
-            // Add inequality to the array of inequalities
-            ieqs += ieq.toArray[Int]
-            // Reset ArrayBuffer to zero for next loop
-            ieq(i)=0; ieq(rows+j)=0; ieq(k)=0; ieq(rows+l)=0
+            if (toMatrix(i)(j) < toMatrix(k)(l)) {
+              ieq.update(i, 1)
+              ieq.update(rows + j, 1)
+              ieq(k) -= 1
+              ieq(cols + l) -= 1
+              // Add inequality to the array of inequalities
+              ieqs += ieq.toArray[Int]
+              // Reset ArrayBuffer to zero for next loop
+              ieq(i)=0; ieq(rows+j)=0; ieq(k)=0; ieq(rows+l)=0
+            }
           }
         }
       }

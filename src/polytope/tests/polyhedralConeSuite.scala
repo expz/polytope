@@ -38,6 +38,11 @@ class polyhedralConeSuite extends UnitSpec {
     pc5.edges().map(_.edge.to[ArrayBuffer]).toSet should be (Set(ArrayBuffer(0, 1, 0), ArrayBuffer(1, 1, 1)))
   }
   
+  it should "calculate AB-edges of a non-trivial cone." in {
+    val pc1 = PolyhedralCone(Array(Array(1, -1, 0, 0), Array(0, 0, 1, -1)), Array(Array(1, 0, 0, 0), Array(0, 0, 1, 0)))
+    pc1.edges(2).map(_.edge.to[ArrayBuffer]).toSet should be (Set(ArrayBuffer(1, 1, 0, 0), ArrayBuffer(0, 0, 1, 1)))
+  }
+  
   it should "create empty array if passed in-equations of varying length." in {
     val pc1 = PolyhedralCone(Array(), Array(Array(1, 1), Array(1)))
     val pc2 = PolyhedralCone(Array(Array(1, 0, -1)), Array(Array(1, 0), Array(0, 1)))
@@ -49,6 +54,21 @@ class polyhedralConeSuite extends UnitSpec {
   it should "correctly make a trivial Weyl chamber." in {
     val wc1 = PolyhedralCone.positiveWeylChamber(1, 0, 1)
     wc1.edges().map(_.edge).deep should be (Array(Array(1)).deep) 
+  }
+  
+  it should "correctly make a non-trivial Weyl chamber." in {
+    val wc1 = PolyhedralCone.positiveWeylChamber(2, 0, 2)
+    val wc2 = PolyhedralCone.positiveWeylChamber(6, 0, 3)
+    val wc3 = PolyhedralCone.positiveWeylChamber(6, 3, 3)
+
+    wc1.eqs.deep should be (Array(Array(1, 1)).deep)
+    wc1.ieqs.deep should be (Array(Array(1, -1)).deep)
+    wc2.eqs.deep should be (Array(Array(1, 1, 1, 0, 0, 0)).deep)
+    wc2.ieqs.deep should be (Array(Array(1, -1, 0, 0, 0, 0), 
+                                   Array(0, 1, -1, 0, 0, 0)).deep)
+    wc3.eqs.deep should be (Array(Array(0, 0, 0, 1, 1, 1)).deep)
+    wc3.ieqs.deep should be (Array(Array(0, 0, 0, 1, -1, 0), 
+                                   Array(0, 0, 0, 0, 1, -1)).deep)    
   }
   
   it should "return multiplicities of A." in {

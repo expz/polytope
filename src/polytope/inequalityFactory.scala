@@ -30,15 +30,21 @@ object InequalityFactory {
   def c(u: Permutation, v: Permutation, w: Permutation, T: RectTableau): Int = 
   {
     // requires knowledge of tableau for substituting vars
+    println("In c()")
+    println("schubert poly: " + hashMapToString(collectTerms(SchubertFactory.schubertPolynomial(w))))
+    println("tableau: " + T.toMatrix.map(_.to[ArrayBuffer]).to[ArrayBuffer])
+    println("substituted schubert poly: " + hashMapToString(subst(collectTerms(SchubertFactory.schubertPolynomial(w)), T)))
     val f = delta(u,
                   subst(collectTerms(SchubertFactory.schubertPolynomial(w)), T),
                   0)
+    println("f = " + hashMapToString(f))
     for (term <- f.keys) {
       // If the term contains y variables, then discard it
       if (term > (1L << T.rows*4 - 1))
         f.remove(term)
     }
     val f2 = delta(v, f, T.rows)
+    println("f2 = " + hashMapToString(f))
     assert(isInteger(f2))
     return f2.getOrElse(0L, 0)
   }
