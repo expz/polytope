@@ -3,8 +3,16 @@ package polytope
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConversions._
-
+/*
 import net.sf.javailp._
+import net.sf.javailp.SolverGLPK.Hook
+import org.gnu.glpk._
+*/
+import com.google.ortools.constraintsolver.DecisionBuilder
+import com.google.ortools.constraintsolver.IntVar
+import com.google.ortools.constraintsolver.IntExpr
+import com.google.ortools.constraintsolver.Solver
+import com.google.ortools.constraintsolver.Solver._
 
 class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
   def this(rows: Int, cols: Int) = this(rows, cols, 
@@ -130,65 +138,45 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
     
     // Sanity check
     if (!isStandardTableau) return false
+            
+    val solver: Solver = new Solver("Admissibility");
+
+    // The maximum value which a variable can take. Every cubicle must have an 
+    // integral ray in its interior whose coordinates are less than this number.
+    val vmax = 10000
+    // Define variables and their negatives for solver
+    val a = solver.makeIntVarArray(rows, 0, vmax, "a")
+    val b = solver.makeIntVarArray(cols, 0, vmax, "b")
+    val minusA = a.map(solver.makeOpposite(_))
+    val minusB = b.map(solver.makeOpposite(_))
     
-    // Variables are numbered from 1
-    val varlist = ListBuffer.tabulate[java.lang.Object](rows+cols)(
-                                      n => n+1:java.lang.Integer)    
-    // Assumes that indices start at 1
-    def createLinear(length: Int, indices: Array[Int], coeffs: Array[Double]): Linear = {
-      return new Linear(ListBuffer.tabulate[java.lang.Double](length)(n => {
-                          val i = indices.indexWhere(_ == n+1)
-                          if (i >= 0) coeffs(i):java.lang.Double
-                          else 0.0:java.lang.Double
-                        }), varlist)
-    }
-    
-    // Define MIP
-    val problem = new Problem()
-    problem.setObjective(createLinear(rows+cols, Array(), Array()), 
-                         OptType.MAX)
-    
-    // Relaxation
-    val eps = 0.1
-        
     // Add constraint that A variables minus B variables is zero
-    val sum = ListBuffer.fill[java.lang.Double](rows)(1.0)
-    sum.appendAll(ListBuffer.fill[java.lang.Double](cols)(-1.0))
-    problem.add(new Linear(sum, varlist), Operator.EQ, 0.0)
+    val sum = minusB.foldLeft(solver.makeSum(a))(
+                              (bvar, sum) => solver.makeSum(bvar, sum))
+    solver.addConstraint(solver.makeEquality(sum, 0))
     
     // Add constraint that variables are ordered in a decreasing manner
-    for (i <- 1 to rows-1)
-      problem.add(createLinear(rows + cols, Array(i, i+1), Array(1.0, -1.0)),  
-                  Operator.GE,
-                  eps)                
-    for (i <- 1 to cols-1)
-      problem.add(createLinear(rows + cols, 
-                               Array(rows+i, rows+i+1), Array(1.0, -1.0)),  
-                  Operator.GE,
-                  eps)
+    for (i <- 0 to rows-2) {
+      solver.addConstraint(solver.makeGreaterOrEqual(a(i), a(i+1)))
+    }
+    for (i <- 0 to cols-2) {
+      solver.addConstraint(solver.makeGreaterOrEqual(b(i), b(i+1)))
+    }
 
     // Add conditions: a(i) + b(j) >= a(k) + b(l) + eps 
-    var varnames: Array[Int] = null
-    var coeffs: Array[Double] = null
     for (i <- 1 to rows) {
       for (j <- 1 to cols) {
         for (k <- 1 to rows) {
           for (l <- 1 to cols) {
             if (this.toMatrix(i-1)(j-1) < this.toMatrix(k-1)(l-1)) {
-              varnames = Array[Int]()
-              coeffs = Array[Double]()
-              if (i != k) {
-                varnames ++= Array(i, k)
-                coeffs ++= Array(1.0, -1.0)
-              }
-              if (j != l) {
-                varnames ++= Array(rows+j, rows+l)
-                coeffs ++= Array(1.0, -1.0)
-              }
-              if (varnames.length != 0)
-                problem.add(createLinear(rows + cols, varnames, coeffs), 
-                            Operator.GE,
-                            eps)
+              if (i != k || j != l)
+                solver.addConstraint(
+                  solver.makeGreaterOrEqual(
+                    solver.makeSum(
+                        solver.makeSum(a(i), b(j)), 
+                        solver.makeSum(minusA(k), minusB(l))
+                    ), 
+                  0))
             }
           }
         }
@@ -196,22 +184,8 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
     }
     
     // Create a solver
-    val solverFactory = new SolverFactoryGLPK()
-    solverFactory.setParameter(Solver.VERBOSE, 1)    
-    val solver = solverFactory.get()
-    
-    // Solve the problem and store success in isAd
-    var isAd = false
-    try {
-      val result = solver.solve(problem)
-      // Tricky: Scala will continue executing this line before finishing the 
-      //         previous line unless this line depends on result
-      if (result != null) isAd = true
-    } catch {
-      case e: Exception => // The solver did not find a solution
-    }
-    
-    return isAd
+    val db = solver.makePhase(a ++ b, Solver.INT_VAR_DEFAULT, Solver.INT_VALUE_DEFAULT)
+    return solver.solve(db)
   }
 }
 
