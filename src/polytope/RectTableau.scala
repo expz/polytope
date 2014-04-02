@@ -8,13 +8,14 @@ import net.sf.javailp._
 import net.sf.javailp.SolverGLPK.Hook
 import org.gnu.glpk._
 */
-import com.google.ortools.constraintsolver.DecisionBuilder
-import com.google.ortools.constraintsolver.IntVar
-import com.google.ortools.constraintsolver.IntExpr
-import com.google.ortools.constraintsolver.Solver
-import com.google.ortools.constraintsolver.Solver._
+import com.google.ortools.linearsolver.MPConstraint;
+import com.google.ortools.linearsolver.MPSolver;
+import com.google.ortools.linearsolver.MPVariable;
+
 
 class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
+  System.loadLibrary("jniortools")
+  
   def this(rows: Int, cols: Int) = this(rows, cols, 
       ArrayBuffer.tabulate[Int](rows*cols)(k => k/cols + 1))
   
@@ -138,54 +139,71 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
     
     // Sanity check
     if (!isStandardTableau) return false
-            
-    val solver: Solver = new Solver("Admissibility");
-
+    
+    val solver = new MPSolver("", MPSolver.CBC_MIXED_INTEGER_PROGRAMMING)
+    
+    val eps = 1.0
+    
     // The maximum value which a variable can take. Every cubicle must have an 
     // integral ray in its interior whose coordinates are less than this number.
-    val vmax = 10000
+    val vmax = MPSolver.infinity()
+    val vmin = -MPSolver.infinity()
+    
     // Define variables and their negatives for solver
-    val a = solver.makeIntVarArray(rows, 0, vmax, "a")
-    val b = solver.makeIntVarArray(cols, 0, vmax, "b")
-    val minusA = a.map(solver.makeOpposite(_))
-    val minusB = b.map(solver.makeOpposite(_))
+    val a = solver.makeNumVarArray(rows, vmin, vmax)
+    val b = solver.makeNumVarArray(cols, vmin, vmax)
     
     // Add constraint that A variables minus B variables is zero
-    val sum = minusB.foldLeft(solver.makeSum(a))(
-                              (bvar, sum) => solver.makeSum(bvar, sum))
-    solver.addConstraint(solver.makeEquality(sum, 0))
+    var ct = solver.makeConstraint(0.0, eps)
+    for (ai <- a) ct.setCoefficient(ai, 1.0)
+    for (bi <- b) ct.setCoefficient(bi, -1.0)
     
+    solver.objective().setCoefficient(a(0), 0.0)
     // Add constraint that variables are ordered in a decreasing manner
     for (i <- 0 to rows-2) {
-      solver.addConstraint(solver.makeGreaterOrEqual(a(i), a(i+1)))
+      ct = solver.makeConstraint(eps, vmax)
+      ct.setCoefficient(a(i), 1.0)
+      ct.setCoefficient(a(i+1), -1.0)
     }
     for (i <- 0 to cols-2) {
-      solver.addConstraint(solver.makeGreaterOrEqual(b(i), b(i+1)))
+      ct = solver.makeConstraint(eps, vmax)
+      ct.setCoefficient(b(i), 1.0)
+      ct.setCoefficient(b(i+1), -1.0)
     }
-
-    // Add conditions: a(i) + b(j) >= a(k) + b(l) + eps 
-    for (i <- 1 to rows) {
-      for (j <- 1 to cols) {
-        for (k <- 1 to rows) {
-          for (l <- 1 to cols) {
-            if (this.toMatrix(i-1)(j-1) < this.toMatrix(k-1)(l-1)) {
-              if (i != k || j != l)
-                solver.addConstraint(
-                  solver.makeGreaterOrEqual(
-                    solver.makeSum(
-                        solver.makeSum(a(i), b(j)), 
-                        solver.makeSum(minusA(k), minusB(l))
-                    ), 
-                  0))
+    
+    // Add conditions: a(i) + b(j) >= a(k) + b(l) + eps
+    val coeffs = ArrayBuffer.fill[Double](4)(0.0)
+    for (i <- 0 until rows) {
+      for (j <- 0 until cols) {
+        for (k <- 0 until rows) {
+          for (l <- 0 until cols) {
+            if (this.toMatrix(i)(j) < this.toMatrix(k)(l)) {
+              coeffs.map(_ => 0.0)
+              if (i != k) {
+                coeffs(0) = 1.0
+                coeffs(2) = -1.0
+              }
+              if (j != l) {
+                coeffs(1) = 1.0
+                coeffs(3) = -1.0
+              }
+              if (i != k || j != l) {
+                ct = solver.makeConstraint(eps, vmax)
+                ct.setCoefficient(a(i), coeffs(0))
+                ct.setCoefficient(b(j), coeffs(1))
+                ct.setCoefficient(a(k), coeffs(2))
+                ct.setCoefficient(b(l), coeffs(3))
+              }
             }
           }
         }
       }
     }
     
-    // Create a solver
-    val db = solver.makePhase(a ++ b, Solver.INT_VAR_DEFAULT, Solver.INT_VALUE_DEFAULT)
-    return solver.solve(db)
+    // Attempt to solve
+    val result = solver.solve()
+    println(result)
+    return (result == MPSolver.OPTIMAL)
   }
 }
 
