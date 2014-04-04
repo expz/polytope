@@ -107,31 +107,17 @@ def subst(f: HashMap[Long, Int], T: RectTableau): HashMap[Long, Int] = {
   assert(T.rows*T.cols > 0 && T.rows*T.cols <= 16)
   val substF = HashMap[Long, Int]()
   var substTerm: HashMap[Long, Int] = null
-  var newSubstTerm: HashMap[Long, Int] = null
-  var n = 0
-  var k = 0
-  var exp = 0
-  // For every term of f
+
+  // Perform substitution for every term of f
   for (term <- f.keys) {
-    substTerm = HashMap[Long, Int](0L -> 1)
-    // For every variable in the term
-    n = 0
+    // Initialize substituted term to 1
+    substTerm = HashMap[Long, Int](0L -> f(term))
+    
+    // For every variable in term
+    var n = 0
     while (n < T.rows*T.cols) {
-      newSubstTerm = HashMap[Long, Int]()
-      exp = getExp(term, n)
-      // Multiply substTerm by (x_i + y_j)^exp where T(i, j) = n to produce
-      // newSubstTerm
-      k = 0
-      while (k <= exp) {
-        // Multiply substTerm by (exp Choose k)*x_i^k*y_j^{exp-k}
-        for (term2 <- substTerm.keys) {
-          newSubstTerm(
-              term2 + addToExp(addToExp(0L, T(n)._1, k), T(n)._2, exp-k)
-              ) = binomial(exp, k)
-        }
-        k += 1
-      }
-      substTerm = newSubstTerm
+      // Multiply substTerm by (x_i + y_j)^exp where T(i, j) = n
+      substTerm = multiply(substTerm, binomialExpansion(T(n)._1-1, T(n)._2-1 + T.rows, getExp(term, n)))
       n += 1
     }
     addInPlace(substF, substTerm)
@@ -147,6 +133,38 @@ def addInPlace(f: HashMap[Long, Int], g: HashMap[Long, Int]) = {
     f(term) = f.getOrElse(term, 0) + g(term)
   }
 }
+
+// WARNING: No check that exponents are between 0 and 15
+def multiply(p1: HashMap[Long, Int], p2: HashMap[Long, Int]): HashMap[Long, Int] = {
+  val prod = HashMap[Long, Int]()
+  for (term1 <- p1.keys) {
+    for (term2 <- p2.keys) {
+      addInPlace(prod, multiplyTerms(term1, term2), p1(term1)*p2(term2))
+    }
+  }
+  return prod
+}
+
+// WARNING: No check that exponents are between 0 and 15
+def multiplyTerms(t1: Term, t2: Term): Term = t1 + t2
+
+def binomialExpansion(firstvar: Int, secondvar: Int, exp: Int): HashMap[Long, Int] = {
+  assert(0 <= firstvar && firstvar < 16)
+  assert(0 <= secondvar && secondvar < 16)
+  assert(0 <= exp && exp < 16)
+  if (exp == 0) return HashMap[Long, Int](0L->1)
+  
+  val p = HashMap[Long, Int]()
+  var term = 0L
+  var k = 0
+  while (k <= exp) {
+    term = 0L
+    p += addToExp(addToExp(term, firstvar, k), secondvar, exp-k) -> binomial(exp, k)
+    k += 1
+  }
+  return p
+}
+
 /*
  * Calculate the binomial coefficient n Choose k
  * 
@@ -238,6 +256,11 @@ def addInPlace(p1: Polynomial, p2: Polynomial) = p1.appendAll(p2)
 def addInPlace(p1: Polynomial, t: Term) = p1.append(t)
 
 @inline
+def addInPlace(p1: HashMap[Long, Int], t: Term, coeff: Int) = { 
+  p1(t) = p1.getOrElse(t, 0) + coeff  
+}
+
+@inline
 def isZero(p: Polynomial): Boolean = {
   for (t <- p) {
     if (t != 0L) return false
@@ -262,18 +285,22 @@ def polyToLatex(p: Polynomial): StringBuilder = {
   hashMapToLatex(collectTerms(p))
 }
 
-def hashMapToString(hm: HashMap[Term, Int]): StringBuilder = {
+def hashMapToString(hm: HashMap[Term, Int], xvars: Int, yvars: Int): StringBuilder = {
+  return hashMapToString(hm, Array.tabulate[String](xvars)(n => "x" + (n+1)) ++ Array.tabulate[String](yvars)(n => "y" + (n+1)))
+}
+
+def hashMapToString(hm: HashMap[Term, Int], varnames: Array[String]): StringBuilder = {
   if (hm.isEmpty) return new StringBuilder("0")
   val s = hm.foldLeft(new StringBuilder)((s,kv) => {
     if (s.size != 0) {
       if (kv._2 != 0) { 
         if (kv._2 != 1) {
           s.appendAll(" + " + kv._2.toString)
-          if (kv._1 != 0L) s.appendAll("*" + termToString(kv._1))
+          if (kv._1 != 0L) s.appendAll("*" + termToString(kv._1, varnames))
         }
         else {
           s.appendAll(" + ")
-          if (kv._1 != 0L) s.appendAll(termToString(kv._1))
+          if (kv._1 != 0L) s.appendAll(termToString(kv._1, varnames))
           else s.append('1')
         }
         
@@ -283,10 +310,10 @@ def hashMapToString(hm: HashMap[Term, Int]): StringBuilder = {
       if (kv._2 != 0) {
         if(kv._2 != 1) {
           s.appendAll(kv._2.toString)
-          if (kv._1 != 0L) s.appendAll("*" + termToString(kv._1))
+          if (kv._1 != 0L) s.appendAll("*" + termToString(kv._1, varnames))
         }
         else {
-          if (kv._1 != 0L) s.appendAll(termToString(kv._1))
+          if (kv._1 != 0L) s.appendAll(termToString(kv._1, varnames))
           else s.append('1')
         }
       }
@@ -294,7 +321,11 @@ def hashMapToString(hm: HashMap[Term, Int]): StringBuilder = {
     s
   })
   if (s.length == 0) return new StringBuilder("0")
-  else return s
+  else return s  
+}
+
+def hashMapToString(hm: HashMap[Term, Int]): StringBuilder = {
+  return hashMapToString(hm, Array.tabulate[String](16)(n => "z" + (n+1)))
 }
 
 def hashMapToLatex(hm: HashMap[Term, Int]): StringBuilder = {
@@ -363,6 +394,24 @@ def termToString(t: Term): String = {
     i += 1
   }
   return s
+}
+
+// WARNING: No check that varnames has enough names to describe the term!!
+@inline
+def termToString(t: Term, varnames: Array[String]): String = {
+  var i = 0
+  var s = ""
+  while (i < 16) {
+    val exp = getExp(t, i) 
+    if (exp != 0) {
+      if (s != "") s += "*"
+      s += varnames(i)
+      if (exp > 1)
+        s += "^" + exp
+    }
+    i += 1
+  }
+  return s  
 }
 
 @inline

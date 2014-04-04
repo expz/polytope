@@ -10,15 +10,13 @@ import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
 /*
- *  TODO run from command line with enough memory
- *  TODO change polynomial to the fastest collection for updates: HashSet? Vector?
- *  TODO estimate of number of recursions: plot run time, memory usage, no. of recursions for Vector(1, 2, 3, 4, ..., n)
- *    Memory usage: construct collection, call System.gc, open Eclipse MAT 
  *  TODO is it possible to encode the situation as BitSet?
  *  TODO is it possible to save the intermediate calculations?
- *  TODO should I save all the vectors in a single hashmap to prevent garbage collection?
+ *  TODO should I save all the vectors in a single hashmap to prevent 
+ *  garbage collection?
  *  TODO How much memory does each node have?
- *  TODO If I run 8 copies of the algorithm, one per core, will the node run out of memory? If so, should I parallelize the algorithm?
+ *  TODO If I run 8 copies of the algorithm, one per core, will the node 
+ *  run out of memory? If so, should I parallelize the algorithm?
  */
 
 object SchubertFactory {
@@ -36,13 +34,14 @@ object SchubertFactory {
   // Makes no attempt to check that the Permutation is actually a Permutation
   // i.e., that it contains every number 1..n exactly once
   def schubertPolynomial(perm: Permutation): Polynomial = { 
-      if (isIdentity(perm)) return ArrayBuffer[Term]()
+      if (isIdentity(perm)) return ArrayBuffer[Term](0L)
       
       val leadFactor: Term = 0L
       return schubertAlgorithm(leadFactor, 0, perm.length-1, perm)
   }
   
-  def schubertAlgorithm(leadFactor: Term, index: Int, exponent: Int, perm: Permutation): Polynomial = {    
+  def schubertAlgorithm(leadFactor: Term, index: Int, exponent: Int, 
+                        perm: Permutation): Polynomial = {    
     // The code actually runs slower when you only define result when its needed
     val result = ArrayBuffer[Term]()
     
@@ -59,20 +58,23 @@ object SchubertFactory {
         result.append(leadFactor)
       }
     } else if (perm(0) == perm.length) {
-        val newPerm: Permutation = perm.drop(1)
-        val newLeadFactor: Term = changeExp(leadFactor, index, exponent)
-        return schubertAlgorithm(newLeadFactor, index+1, newPerm.length - 1, newPerm)
+      val newPerm: Permutation = perm.drop(1)
+      val newLeadFactor: Term = changeExp(leadFactor, index, exponent)
+      return schubertAlgorithm(newLeadFactor, index+1, newPerm.length - 1, 
+                               newPerm)
     } else {
-        var max: Int = perm.length + 1
-        var i: Int = 1
-        while (i < perm.length) {
-            if (perm(i) < max && perm(i) > perm(0)) {
-              max = perm(i)
-              val newPerm: Permutation = perm.updated(0, perm(i)).updated(i, perm(0))
-                addInPlace(result, schubertAlgorithm(leadFactor, index, exponent-1, newPerm))
-            }
-            i += 1
+      var max: Int = perm.length + 1
+      var i: Int = 1
+      while (i < perm.length) {
+        if (perm(i) < max && perm(i) > perm(0)) {
+          max = perm(i)
+          val newPerm: Permutation = 
+                                    perm.updated(0, perm(i)).updated(i, perm(0))
+          addInPlace(result, 
+                     schubertAlgorithm(leadFactor, index, exponent-1, newPerm))
         }
+        i += 1
+      }
     }
     return result
   }

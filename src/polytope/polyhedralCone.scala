@@ -45,16 +45,24 @@ object PolyhedralCone {
    * positiveWeylChamber -- Return the positive Weyl chamber for the 
    *                        numChamberVars starting at firstChamberVar in a
    *                        total space of numTotalVars
+   *                        
+   *                        The cone where consecutive variables decrease
    * 
    * @param numTotalVars                       
    * @param firstChamberVar starts counting at 0
    * @param numChamberVars
    */
-  def positiveWeylChamber(numTotalVars: Int, firstChamberVar: Int, numChamberVars: Int): PolyhedralCone = {
+  def positiveWeylChamber(numTotalVars: Int, 
+                          firstChamberVar: Int, 
+                          numChamberVars: Int): PolyhedralCone = {
     assert(numTotalVars >= 0)
     assert(firstChamberVar >= 0 && firstChamberVar < numTotalVars)
     assert(numChamberVars >= 0 && firstChamberVar + numChamberVars <= numTotalVars)
+    
+    // There will be a single equation
     val eq = ArrayBuffer.fill[Int](numTotalVars)(0)
+    
+    // Deal with the trivial cases separately
     if (numChamberVars == 0) {
       return new PolyhedralCone(Array[Array[Int]](), Array[Array[Int]]())
     } else if (numChamberVars == 1) {
@@ -62,10 +70,16 @@ object PolyhedralCone {
       eq(firstChamberVar) = 1
       return new PolyhedralCone(Array(eq.toArray), ieqs)
     }
+    
+    // The sum of chamber variables is zero (trace zero assumption) 
     var i = firstChamberVar
     while (i < firstChamberVar + numChamberVars) { eq(i) = 1; i += 1 }
+    
+    // Define the array to hold the inequalities
     val ieqs = ArrayBuffer[Array[Int]]()
     val ieq = ArrayBuffer.fill[Int](numTotalVars)(0)
+        
+    // x(i) > x(i+1) for every x(i), x(i+1) in the chamber variables
     i = firstChamberVar
     while (i < firstChamberVar + numChamberVars - 1) {
       // Create equations in ieq
@@ -79,6 +93,14 @@ object PolyhedralCone {
 }
 
 class Edge(val edge: Array[Int]) {
+  def mult(): Array[Int] = mult(edge)
+  
+  /*
+   * mult(v) -- Given (v(0), ..., v(n-1)) returns (c(0), ..., c(k))
+   *            where c(0) is the number of consecutive entries equal to v(0),
+   *            c(1) is the number of consecutive entries equal to next distinct
+   *            element, etc. 
+   */
   protected def mult(v: Array[Int]): Array[Int] = {
     val m = ArrayBuffer[Int]()
     if (v.length == 0) return m.toArray
@@ -93,32 +115,32 @@ class Edge(val edge: Array[Int]) {
   }
 }
 
-/*
- * WARNING: No check that dimA <= edge.length
- */
+
 class ABEdge(edge: Array[Int], val dimA: Int) extends Edge(edge) {
+  assert(dimA <= edge.length)
+  
   def dimB: Int = edge.length - dimA
   def A(): Array[Int] = edge.take(dimA)
   def A(i: Int): Int = { assert(i >= 0 && i < dimA); return edge(i) }
   def B(): Array[Int] = edge.drop(dimA)
   def B(i: Int): Int = { assert(i >= 0 && i < dimB); return edge(dimA+i)}
-  def AB() = edge
-  def ABTriples(): Array[(Int,Int,Int)] = {
-    val ab = ArrayBuffer[(Int, Int, Int)]()
-    var i = 0
-    var j = 0
-    while (i < dimA) {
-      j = 0
-      while (j < dimB) {
-        ab.append((i, j, edge(i) + edge(dimA+j)))
-        j += 1
-      }
-      i += 1
-    }
-    return ab.sorted[(Int, Int, Int)](Ordering.by[(Int, Int, Int), Int](_._3)).toArray
-  }
   
+  def AB(): Array[Int] = {
+    val ab = Array.tabulate[Int](dimA*dimB)(n => A(n%dimA) + B(n/dimB))
+    scala.util.Sorting.quickSort(ab)
+    return ab.reverse
+  } 
+      
+  def ABTriples(): Array[(Int,Int,Int)] = {
+    val ab = Array.tabulate[(Int, Int, Int)](dimA*dimB)(
+                 n => (n%dimA, n/dimB, A(n%dimA)+ B(n/dimB)))
+    return ab.sorted(Ordering.by[(Int, Int, Int), Int](-_._3)).toArray
+  }
+
   def multA(): Array[Int] = mult(A())
   def multB(): Array[Int] = mult(B())
-  def multAB(): Array[Int] = mult(edge)
+  def multAB(): Array[Int] = mult(AB())
+  
+  override def toString = 
+      "((" + A().mkString(", ") + "), (" + B().mkString(", ") + "))"
 }

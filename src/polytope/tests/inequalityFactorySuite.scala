@@ -36,14 +36,44 @@ class inequalityFactorySuite extends UnitSpec {
   
   it should "calculate 2x2x4 inequalities." in {
     val (dimA, dimB) = (2, 2)
-    println(RectTableau.standardTableaux(dimA, dimB).filter(_.isAdmissible).length)
     val ineqs = InequalityFactory.inequalities(2, 2)
-    println(ineqs.map(_.toLatex()))
-  } 
+    val poly = PolyhedralCone(Array[Array[Int]](),
+                              ineqs.map(_.toArray()).toArray).
+               intersection(PolyhedralCone.positiveWeylChamber(8, 0, 2)).
+               intersection(PolyhedralCone.positiveWeylChamber(8, 2, 2)).
+               intersection(PolyhedralCone.positiveWeylChamber(8, 4, 4))
+    // Differs from Michael's by negatives in the last four coords
+    // He intersects with the Weyl Chambers for increasing spectra
+    val bravyiPoly = PolyhedralCone(Array[Array[Int]](), Array(
+                                    Array(-1, 1, 0, 0, -1, -1, 1, 1),
+                                    Array(0, 0, -1, 1, -1, -1, 1, 1),
+                                    Array(-1, 0, -1, 0, -1, 0, 0, 1),
+                                    Array(-1, 0, 1, 0, 0, -1, 0, 1),
+                                    Array(1, 0, -1, 0, 0, -1, 0, 1),
+                                    Array(-1, 0, 1, 0, -1, 0, 1, 0),
+                                    Array(1, 0, -1, 0, -1, 0, 1, 0))).
+                     intersection(PolyhedralCone.positiveWeylChamber(8, 0, 2)).
+                     intersection(PolyhedralCone.positiveWeylChamber(8, 2, 2)).
+                     intersection(PolyhedralCone.positiveWeylChamber(8, 4, 4))
+                     
+    poly.edges().map(_.edge.to[ArrayBuffer]).toSet should be (
+        bravyiPoly.edges().map(_.edge.to[ArrayBuffer]).toSet
+    )
+    
+    println("===============================")
+    println("2x2x4 Inequalities: ")
+    ineqs.foreach(i => println(i.toLatex() + """\\"""))
+    println("===============================")
+  }
   
   it should "calculate 3x3x9 inequalities." in {
-    
+    /*
+     * Currently infeasible on a single core
+     *
     val ineqs = InequalityFactory.inequalities(3, 3)
-    println(ineqs.map(_.toLatex()))
+    println("===============================")
+    println("3x3x9 Inequalities: ")
+    ineqs.foreach(i => println(i.toLatex() + """\\"""))
+     */
   }
 }
