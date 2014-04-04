@@ -15,10 +15,29 @@ type Polynomial = ArrayBuffer[Long]
 type Permutation = Array[Int]
 
 def main(args: Array[String]) {
-  println(PermutationFactory.shuffles(Array(1)).length)
-  //val perm = SchubertFactory.readPermutation()
-  //val perm = Vector(3, 1, 4, 2) 
-  //SchubertFactory.test()
+  try {
+    val (dimA, dimB) = (args(0).toInt, args(1).toInt)
+    if (dimA < 0 || dimB < 0) {
+      println("Dimensions must be non-negative")
+      return
+    }
+    //val (dimA, dimB) = (2, 2)
+    val ieqs = InequalityFactory.inequalities(dimA, dimB)
+    val poly = PolyhedralCone.momentPolyhedron(ieqs)
+    
+    // Print 2x2x4 inequalities
+    println(dimA + "x" + dimB + "x" + dimA*dimB + " Inequalities:\n")
+    ieqs.foreach(i => println(i.toLatex() + """\\"""))
+    
+    // Print 2x2x4 edges
+    println("\n\nVertices of moment polytope (spectrum are ordered decreasing)\n")
+    poly.edges().foreach(e => println(e))
+  } catch {
+    case e: java.lang.NumberFormatException => {
+      println("Calculate the marginal inequalities of mixed state eigenvalues")
+      println("Usage: polytope DIM_A DIM_B")
+    }
+  }
 }
 
 def inverse(p: Permutation): Permutation 

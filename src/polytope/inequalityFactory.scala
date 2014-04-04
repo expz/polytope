@@ -1,45 +1,26 @@
 package polytope
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.HashMap
+import scala.collection.mutable.HashSet
 
 object InequalityFactory {
     
-  def inequalities(dimA: Int, dimB: Int): ArrayBuffer[Inequality] = {
-    val ieqs = ArrayBuffer[Inequality]()
+  def inequalities(dimA: Int, dimB: Int): HashSet[Inequality] = {
+    val ieqs = HashSet[Inequality]()
     for (T <- RectTableau.standardTableaux(dimA, dimB).filter(_.isAdmissible)) {
       val dimAB = dimA*dimB
-      println("===========")
-      println(T.toMatrix)
-      println(T.toCone.edges(dimA).toList)
       for (edge <- T.toCone.edges(dimA)) {
-        println("----------")
-        println("edge: " + edge.toString)
-        println("A: " + edge.A().toVector)
-        //println("shuffles u: " + PermutationFactory.shuffles(edge.multA).map(_.to[ArrayBuffer]))
-        println("B: " + edge.B().toVector)
-        println("AB: " + edge.AB().toVector)
-        println("multA: " + edge.multA.to[ArrayBuffer])
-        println("multB: " + edge.multB.to[ArrayBuffer])
-        println("multAB: " + edge.multAB.to[ArrayBuffer])
-        //println("shuffles v: " + PermutationFactory.shuffles(edge.multB).map(_.to[ArrayBuffer]))
-        //println("==========")
         for (u <- PermutationFactory.shuffles(edge.multA)) {
           for (v <- PermutationFactory.shuffles(edge.multB)) {
-
-            //println("shuffles w: " + PermutationFactory.shuffles(edge.multAB).map(_.to[ArrayBuffer]))
             for (w <- PermutationFactory.shuffles(edge.multAB)) {
-                //println("u: " + u.to[ArrayBuffer] + "  v: " + v.to[ArrayBuffer] + "  w: " + w.to[ArrayBuffer])
-                //println("l(u): " + reducedWord(u).length + "  l(v): " + reducedWord(v).length + "  l(w): " + reducedWord(w).length)
-                c(u, v, w, T)
               if (reducedWord(u).length + reducedWord(v).length == 
                                                         reducedWord(w).length) {
-                
-                if (c(u, v, w, T) != 0) {
-                  // This can create duplicates in the ArrayBuffer
-                  //   The duplicates are removed at the end
-                  //   Using a HashSet in the loop is too costly
-                  ieqs.append(new Inequality(u, v, w, edge))
-                  println("++++ Found ++++  ieq Array: " + ieqs.last.toArray.toVector + "  c: " + c(u,v,w,T))
+                // In this case, c(u,v,w,T) will be a constant
+                if (c(u, v, w, T).getOrElse(0L, 0) == 1) {
+                  println("edge: " + edge.edge.toVector + "  multA: " + edge.multA.toVector + "  multB: " + edge.multB.toVector + "  multAB: " + edge.multAB.toVector)
+                  println("u: " + u.toVector + "  v: " + v.toVector + "  w: " + w.toVector + "  T: " + T.toMatrix)
+                  ieqs += new Inequality(u, v, w, edge)
+                  println(new Inequality(u, v, w, edge))
                 }
               }
             }
@@ -51,20 +32,13 @@ object InequalityFactory {
     return ieqs
   }
   
-  def c(u: Permutation, v: Permutation, w: Permutation, T: RectTableau): Int = 
+  def c(u: Permutation, v: Permutation, 
+        w: Permutation, T: RectTableau): HashMap[Long, Int] = 
   {
     // requires knowledge of tableau for substituting vars
-    //println("In c()")
-    //println("w: " + w.to[ArrayBuffer])
-    //println(SchubertFactory.schubertPolynomial(w))
-    //println("schubert poly of w: " + hashMapToString(collectTerms(SchubertFactory.schubertPolynomial(w))))
-    //println("tableau: " + T.toMatrix.map(_.to[ArrayBuffer]).to[ArrayBuffer])
-    //println("substituted schubert poly: " + hashMapToString(subst(collectTerms(SchubertFactory.schubertPolynomial(w)), T), u.length, v.length))
-    //println("u: " + u.to[ArrayBuffer])
     val f = delta(u,
                   subst(collectTerms(SchubertFactory.schubertPolynomial(w)), T),
                   0)
-    //println("delta_u = " + hashMapToString(f, u.length, v.length))
     /*
     // Remove terms which only have y variables, because delta will zero them
     // anyway. Saves time?
@@ -73,26 +47,39 @@ object InequalityFactory {
     }
     */
     val f2 = delta(v, f, T.rows)
-    //println("v: " + v.to[ArrayBuffer])
-    //println("delta_v delta_u = " + hashMapToString(f2, u.length, v.length))
-    //assert(isInteger(f2))
-    return f2.getOrElse(0L, 0)
+    return f2
   }
 }
 
-class Inequality(u: Permutation, v: Permutation, w: Permutation, e: ABEdge) {
+class Inequality(val u: Permutation, 
+                 val v: Permutation, 
+                 val w: Permutation, 
+                 e: ABEdge) {
   assert(e.dimA == u.length && e.dimB == v.length)
   assert(w.length == u.length*v.length)
   
+  def dimA = u.length
+  def dimB = v.length
+  def dimAB = w.length
+  
+  // coeffs*vars >= 0
+  val coeffs = act(inverse(u), e.A).map(-_) ++
+               act(inverse(v), e.B).map(-_) ++ 
+               act(inverse(w), e.AB)
+               
+  override def hashCode() = coeffs.deep.hashCode()
+  override def equals(a: Any) = a match {
+    case ieq: Inequality => ieq.hashCode() == this.hashCode()
+    case _ => false
+  }
+  
+  override def toString: String = "Inequality(dimA = " + dimA + 
+                                  ", dimB = " + dimB + 
+                                  ", coeffs = (" + coeffs.mkString(", ") + "))"
+  
   // Returns the coefficients of the inequality  
   // a_1 l_au(1) + .. + b(1) l_bv(1) + .. - ab(1) l_abw(1) >= 0 
-  def toArray(): Array[Int] = {
-    val uA = act(inverse(u), e.A())
-    val vB = act(inverse(v), e.B())
-    val wAB = act(inverse(w), e.AB()).map(-_)
-    
-    return uA ++ vB ++ wAB
-  }
+  def toArray(): Array[Int] = coeffs
   
   def toLatex(): String = { 
     def format(coeff: Int, term: String): String = {
@@ -103,51 +90,52 @@ class Inequality(u: Permutation, v: Permutation, w: Permutation, e: ABEdge) {
     }
     // WARNING: The argument must be a string (double quotes) for this to work
     val b = new StringBuilder("$")
-      
-    val uA = act(inverse(u), e.A())
-    val vB = act(inverse(v), e.B())
-    val wAB = act(inverse(w), e.ABTriples())
     
+    // We move the coefficients of \lambda^A to the LHS of the <=    
     var i = 0
-    while (i < uA.length) {
+    while (i < dimA) {
       if (b.length == 1) {
-        b ++= format(uA(i), "\\lambda^A_" + (i+1))
-      } else if (uA(i) < 0) {
-        b ++= " - " + format(-uA(i), "\\lambda^A_" + (i+1))
-      } else if (uA(i) > 0) {
-        b ++= " + " + format(uA(i), "\\lambda^A_" + (i+1)) 
+        b ++= format(-coeffs(i), "\\lambda^A_" + (i+1))
+      } else if (-coeffs(i) < 0) {
+        b ++= " - " + format(coeffs(i), "\\lambda^A_" + (i+1))
+      } else if (-coeffs(i) > 0) {
+        b ++= " + " + format(-coeffs(i), "\\lambda^A_" + (i+1)) 
       }
       i += 1
     }
-    i = 0
-    while (i < vB.length) {
+    
+    // We move the coefficients of \lambda^B to the LHS of the <=
+    i = dimA
+    while (i < dimA + dimB) {
       if (b.length == 1) {
-        b ++= format(vB(i), "\\lambda^B_" + (i+1))
-      } else if (vB(i) < 0) {
-        b ++= " - " + format(-vB(i), "\\lambda^B_" + (i+1))
-      } else if (vB(i) > 0) {
-        b ++= " + " + format(vB(i), "\\lambda^B_" + (i+1))
+        b ++= format(-coeffs(i), "\\lambda^B_" + (i+1-dimA))
+      } else if (-coeffs(i) < 0) {
+        b ++= " - " + format(coeffs(i), "\\lambda^B_" + (i+1-dimA))
+      } else if (-coeffs(i) > 0) {
+        b ++= " + " + format(-coeffs(i), "\\lambda^B_" + (i+1-dimA))
       }
       i += 1
     }
     if (b.length == 1) b += '0'
     b ++= " \\leq "
+      
     var zero = true
-    var coeff = 0
-    i = 0
-    while (i < wAB.length) {
-      coeff = e.A(wAB(i)._1) + e.B(wAB(i)._2)
-      if (zero && coeff != 0) {
+    i = dimA + dimB
+    while (i < dimA + dimB + dimAB) {
+      if (zero && coeffs(i) != 0) {
         zero = false
-        b ++= format(coeff, "\\lambda^{AB}_" + (i+1))
-      } else if (coeff > 0) {
-        b ++= " + " + format(coeff, "\\lambda^{AB}_" + (i+1))
-      } else if (coeff < 0) {
-        b ++= " - " + format(-coeff, "\\lambda^{AB}_" + (i+1))
+        b ++= format(coeffs(i), "\\lambda^{AB}_" + (i+1-dimA-dimB))
+      } else if (coeffs(i) > 0) {
+        b ++= " + " + format(coeffs(i), "\\lambda^{AB}_" + (i+1-dimA-dimB))
+      } else if (coeffs(i) < 0) {
+        b ++= " - " + format(-coeffs(i), "\\lambda^{AB}_" + (i+1-dimA-dimB))
       }
       i += 1
     }
+    // If the coefficients were all zero, then put a zero on the right side
     if (zero) b += '0'
+
+    // Close off the LaTeX and return
     b += '$'
     return b.result
   }
