@@ -17,10 +17,7 @@ object InequalityFactory {
                                                         reducedWord(w).length) {
                 // In this case, c(u,v,w,T) will be a constant
                 if (c(u, v, w, T).getOrElse(0L, 0) == 1) {
-                  println("edge: " + edge.edge.toVector + "  multA: " + edge.multA.toVector + "  multB: " + edge.multB.toVector + "  multAB: " + edge.multAB.toVector)
-                  println("u: " + u.toVector + "  v: " + v.toVector + "  w: " + w.toVector + "  T: " + T.toMatrix)
                   ieqs += new Inequality(u, v, w, edge)
-                  println(new Inequality(u, v, w, edge))
                 }
               }
             }

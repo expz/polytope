@@ -23,9 +23,17 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
     return new PolyhedralCone(eqs ++ P2.eqs, ieqs ++ P2.ieqs)
   }
   
-  def edges(): Array[Edge] = PA.getBigIntegerRays(eqs, ieqs).map(
-                                  arr => new Edge(arr.map(_.intValue())))
-                                  
+  def nonzeroEdges(): Array[Edge] = PA.getBigIntegerRays(eqs, ieqs).map(
+      arr => new Edge(arr.map(_.intValue()))) 
+ 
+  def edges(): Array[Edge] = {
+    if (eqs.length == 0 && ieqs.length == 0)
+      return Array()
+    
+    nonzeroEdges() ++ Array(new Edge(Array.fill[Int](
+        if (eqs.length > 0) eqs(0).length else ieqs(0).length)(0)))
+  }
+  
   def edges(dimA: Int): ArrayBuffer[ABEdge] = {
     val es = ArrayBuffer[ABEdge]()
     for (r <- PA.getBigIntegerRays(eqs, ieqs)) {
