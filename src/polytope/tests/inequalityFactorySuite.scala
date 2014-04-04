@@ -65,8 +65,8 @@ class inequalityFactorySuite extends UnitSpec {
 
     println("2x2x4 Inequalities:\n")
     ieqs.foreach(i => println(i.toLatex() + """\\"""))
-    println("\n\n2x2x4 Inequality coefficients:\n")
-    ieqs.foreach(i => println("[" + i.coeffs.mkString(", ") + "]"))
+    println("\n\n2x2x4 Vertices of polytope:\n")
+    poly.edges().foreach(e => println("(" + e.edge.mkString(", ") + ")"))
     println()
     
     poly.edges().map(_.edge.toVector).toSet should be (

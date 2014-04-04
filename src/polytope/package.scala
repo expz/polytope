@@ -16,26 +16,54 @@ type Permutation = Array[Int]
 
 def main(args: Array[String]) {
   try {
+    if (args.length == 1 && args(0) == "--help") {
+      println("Usage: polytope DIM_A DIM_B")
+      println("Calculate the entanglement polytope for mixed states of two distinguishable")
+      println("  particles with DIM_A and DIM_B degrees of freedom respectively")
+      println()
+      println("Report bugs to jskowera@gmail.com")
+      println("Source code available at <https://github.com/expz/entanglement-polytopes/>" )
+      return
+    }
+    if (args.length != 2) {
+      println("polytope: wrong number of arguments (" + args.length + ")")
+      println("Usage: polytope DIM_A DIM_B")
+      return
+    }
+    
     val (dimA, dimB) = (args(0).toInt, args(1).toInt)
     if (dimA < 0 || dimB < 0) {
-      println("Dimensions must be non-negative")
+      println("polytope: dimensions must be non-negative")
       return
+    }
+    if (dimA*dimB >= 9) {
+      println("polytope: the polytope will have dimensions " + dimA + "x" + dimB + "x" + dimA*dimB)
+      println("WARNING: THIS COMPUTATION COULD TAKE HOURS ON A SINGLE CPU")
+      println("Are you sure you want to continue [Y/n]?")
+      var ans = readChar()
+      while (ans != 'Y' && ans != 'n') {
+        println("Please enter 'Y' for yes or 'n' for no")
+        ans = readChar()
+      }
+      if (ans == 'n') {
+        println("polytope: computation aborted at user request")
+        return
+      }
     }
     //val (dimA, dimB) = (2, 2)
     val ieqs = InequalityFactory.inequalities(dimA, dimB)
     val poly = PolyhedralCone.momentPolyhedron(ieqs)
     
-    // Print 2x2x4 inequalities
+    // Print inequalities in LaTeX
     println(dimA + "x" + dimB + "x" + dimA*dimB + " Inequalities:\n")
     ieqs.foreach(i => println(i.toLatex() + """\\"""))
     
-    // Print 2x2x4 edges
-    println("\n\nVertices of moment polytope (spectrum are ordered decreasing)\n")
+    // Print edges
+    println("\n\nVertices of moment polytope (normalized to trace zero)\n")
     poly.edges().foreach(e => println(e))
   } catch {
     case e: java.lang.NumberFormatException => {
-      println("Calculate the marginal inequalities of mixed state eigenvalues")
-      println("Usage: polytope DIM_A DIM_B")
+      println("polytope: the dimensions must be numbers")
     }
   }
 }
