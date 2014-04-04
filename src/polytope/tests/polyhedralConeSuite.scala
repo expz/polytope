@@ -71,6 +71,12 @@ class polyhedralConeSuite extends UnitSpec {
                                    Array(0, 0, 0, 0, 1, -1)).deep)    
   }
   
+  "ABEdge" should "calculate the mixed AB edge." in {
+    val e1 = new ABEdge(Array(0, 0, 0, 0), 2)
+    
+    e1.AB().deep should be (Array(0, 0, 0, 0).deep)
+  }
+  
   it should "return multiplicities of A." in {
     val e1 = new ABEdge(Array(), 0)
     val e2 = new ABEdge(Array(1, 1), 0)
@@ -81,5 +87,11 @@ class polyhedralConeSuite extends UnitSpec {
     e2.multA().deep should be (Array[Int]().deep)
     e3.multA().deep should be (Array(3).deep)
     e4.multA().deep should be (Array(2, 1).deep)
-  } 
+  }
+  
+  "multAB" should "return multiplicities of AB pairs." in {
+    val e1 = new ABEdge(Array(1, 2, 1, 2), 2)
+    
+    e1.multAB().deep should be (Array(2, 2).deep)
+  }
 }

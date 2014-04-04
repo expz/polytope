@@ -4,8 +4,10 @@ import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 object PermutationFactory {
-  def shiftedShuffleProduct(w1: Permutation, w2: Permutation): ArrayBuffer[Permutation] = {
-    distinctShuffleProduct((w1 ++ w2.map(k => k + w1.length)).to[ArrayBuffer], w1.length)
+  def shiftedShuffleProduct(w1: Permutation, w2: Permutation): 
+        ArrayBuffer[Permutation] = {
+    distinctShuffleProduct((w1 ++ w2.map(k => k + w1.length)).to[ArrayBuffer], 
+                           w1.length)
   }
   
   /*
@@ -41,12 +43,14 @@ object PermutationFactory {
       if (odd) {
         S2.clear()
         for (w <- S1) {
-          S2 ++= shiftedShuffleProduct(w, (1 to mults(i)).toArray)   // shuffle product of [1, ..., mults[i]]
+          // shuffle product of [1, ..., mults[i]]
+          S2 ++= shiftedShuffleProduct(w, (1 to mults(i)).toArray)
         }
       } else {
         S1.clear()
         for (w <- S2) {
-          S1 ++= shiftedShuffleProduct(w, (1 to mults(i)).toArray)  // shuffle product of [1, ..., mults[i]]
+          // shuffle product of [1, ..., mults[i]]
+          S1 ++= shiftedShuffleProduct(w, (1 to mults(i)).toArray)
         }
       }
       i += 1
@@ -55,7 +59,8 @@ object PermutationFactory {
     else return S1
   }
   
-  def shufflesOfGivenLength(mults: Array[Int], numInversions: Int): ArrayBuffer[Permutation] = {
+  def shufflesOfGivenLength(mults: Array[Int], numInversions: Int): 
+        ArrayBuffer[Permutation] = {
     val perms = ArrayBuffer[Permutation]()
     val n = mults.sum    // Length of permutations (Number of symbols)
     val dontPass = ArrayBuffer[Int]()
@@ -66,8 +71,8 @@ object PermutationFactory {
     }
     
     /*
-    Generate all permutations of the ordered list S with k inversions and add them to perms
-    (after adding the optional suffix).
+    Generate all permutations of the ordered list S with k inversions and add
+    them to perms (after adding the optional suffix).
     */  
     @inline
     def delete[A](v: Array[A], n: Int) = v.filter(_ != n)

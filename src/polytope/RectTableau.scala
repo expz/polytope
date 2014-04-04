@@ -202,7 +202,6 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
     
     // Attempt to solve
     val result = solver.solve()
-    println(result)
     return (result == MPSolver.OPTIMAL)
   }
 }
