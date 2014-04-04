@@ -9,7 +9,7 @@ import polytope._
 
 import scala.collection.immutable.Set
 import scala.collection.mutable.ArrayBuffer
-
+import scala.collection.mutable.HashSet
 
 @RunWith(classOf[JUnitRunner])
 class inequalityFactorySuite extends UnitSpec {
@@ -17,10 +17,21 @@ class inequalityFactorySuite extends UnitSpec {
     val c1 = InequalityFactory.c(Array(1, 2), Array(1, 2), Array(1, 2, 3, 4), 
                                  RectTableau(2, 2, ArrayBuffer(1, 1, 2, 2)))
 
-    c1 should be (0)
+    isInteger(c1) should be (true)
+    c1.getOrElse(0L, 0) should be (1)
   }
   
-  it should "correctly calculate non-trivial coefficients." is (pending)
+  it should "correctly calculate non-trivial coefficients." in {
+    val c1 = InequalityFactory.c(Array(2, 1), Array(2, 1), Array(1, 3, 4, 2),
+                                RectTableau(Array(Array(1, 2), Array(3, 4))))
+    val c2 = InequalityFactory.c(Array(2, 1), Array(2, 1), Array(3, 1, 2, 4),
+                                RectTableau(Array(Array(1, 2), Array(3, 4))))
+    
+    isInteger(c1) should be (true)
+    c1.getOrElse(0L, 0) should be > 0
+    isInteger(c2) should be (true)
+    c2.getOrElse(0L, 0) should be > 0
+  }
   
   it should "convert inequalities to Latex." in {
     val ieq1 = new Inequality(Array(1, 2), Array(2, 1), Array(3, 2, 4, 1), 
@@ -29,44 +40,42 @@ class inequalityFactorySuite extends UnitSpec {
                               new ABEdge(Array(0, -1), 0))
     
     ieq1.toLatex.replaceAll(" ", "") should be (
-           """$\lambda^A_1+2\lambda^B_1-\lambda^B_2\leq"""
-         + """3\lambda^{AB}_1-\lambda^{AB}_3+2\lambda^{AB}_4$""")
+           """$\lambda^A_1-\lambda^B_1+2\lambda^B_2\leq"""
+         + """-\lambda^{AB}_1+2\lambda^{AB}_2+3\lambda^{AB}_3$""")
     ieq2.toLatex.replaceAll(" ", "") should be ("""$-\lambda^B_1\leq0$""")
   }
   
   it should "calculate 2x2x4 inequalities." in {
-    val (dimA, dimB) = (2, 2)
-    val ineqs = InequalityFactory.inequalities(2, 2)
-    val poly = PolyhedralCone(Array[Array[Int]](),
-                              ineqs.map(_.toArray()).toArray).
-               intersection(PolyhedralCone.positiveWeylChamber(8, 0, 2)).
-               intersection(PolyhedralCone.positiveWeylChamber(8, 2, 2)).
-               intersection(PolyhedralCone.positiveWeylChamber(8, 4, 4))
+    val ieqs = InequalityFactory.inequalities(2, 2)
+    val poly = PolyhedralCone.momentPolyhedron(ieqs)
+    
     // Differs from Michael's by negatives in the last four coords
     // He intersects with the Weyl Chambers for increasing spectra
     val bravyiPoly = PolyhedralCone(Array[Array[Int]](), Array(
-                                    Array(-1, 1, 0, 0, -1, -1, 1, 1),
-                                    Array(0, 0, -1, 1, -1, -1, 1, 1),
-                                    Array(-1, 0, -1, 0, -1, 0, 0, 1),
-                                    Array(-1, 0, 1, 0, 0, -1, 0, 1),
-                                    Array(1, 0, -1, 0, 0, -1, 0, 1),
-                                    Array(-1, 0, 1, 0, -1, 0, 1, 0),
-                                    Array(1, 0, -1, 0, -1, 0, 1, 0))).
+                                    Array(-1, 1, -1, 1, 2, 0, 0, -2),
+                                    Array(-1, 1, 0, 0, 1, 1, -1, -1),
+                                    Array(0, 0, -1, 1, 1, 1, -1, -1),
+                                    Array(1, -1, -1, 1, 0, 2, 0, -2),
+                                    Array(-1, 1, 1, -1, 0, 2, 0, -2),
+                                    Array(1, -1, -1, 1, 2, 0, -2, 0),
+                                    Array(-1, 1, 1, -1, 2, 0, -2, 0))).
                      intersection(PolyhedralCone.positiveWeylChamber(8, 0, 2)).
                      intersection(PolyhedralCone.positiveWeylChamber(8, 2, 2)).
                      intersection(PolyhedralCone.positiveWeylChamber(8, 4, 4))
-                     
-    poly.edges().map(_.edge.to[ArrayBuffer]).toSet should be (
-        bravyiPoly.edges().map(_.edge.to[ArrayBuffer]).toSet
+
+    println("2x2x4 Inequalities:\n")
+    ieqs.foreach(i => println(i.toLatex() + """\\"""))
+    println("\n\n2x2x4 Inequality coefficients:\n")
+    ieqs.foreach(i => println("[" + i.coeffs.mkString(", ") + "]"))
+    println()
+    
+    poly.edges().map(_.edge.toVector).toSet should be (
+        bravyiPoly.edges().map(_.edge.toVector).toSet
     )
     
-    println("===============================")
-    println("2x2x4 Inequalities: ")
-    ineqs.foreach(i => println(i.toLatex() + """\\"""))
-    println("===============================")
   }
   
-  it should "calculate 3x3x9 inequalities." in {
+  it should "calculate 3x3x9 inequalities." is (pending)
     /*
      * Currently infeasible on a single core
      *
@@ -75,5 +84,4 @@ class inequalityFactorySuite extends UnitSpec {
     println("3x3x9 Inequalities: ")
     ineqs.foreach(i => println(i.toLatex() + """\\"""))
      */
-  }
 }

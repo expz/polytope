@@ -45,7 +45,7 @@ class packageSuite extends UnitSpec {
     lc4.to[ArrayBuffer] should be (ArrayBuffer(2, 0, 1, 0))
   }
   
-  "reducedWord" should "work for trivial permutations." in {
+  "reducedWord" should "produced a reduced word decomposition for trivial permutations." in {
     val rw1 = reducedWord(Array())
     val rw2 = reducedWord(Array(1))
     val rw3 = reducedWord(Array(1, 2, 3))
@@ -56,15 +56,17 @@ class packageSuite extends UnitSpec {
   }
   
   // Note that the reduced word decomposition is not unique. Only its length is.
-  it should "work for non-trivial permutations." in {
+  it should "produce a reduced word decomposition for non-trivial permutations." in {
     val rw1 = reducedWord(Array(2, 1))
     val rw2 = reducedWord(Array(3, 2, 1))
     val rw3 = reducedWord(Array(2, 4, 3, 1))
+    val rw4 = reducedWord(Array(3, 1, 2, 4))
     
     rw1.deep should be (Array(1).deep)
     rw2 should have length (3)
     Set(Vector(1, 2, 1), Vector(2, 1, 2)) should contain (rw2.toVector)
     rw3 should have length (4)
+    rw4 should have length (2)
   }
   
   "delta" should "return the identity for the identity permutation." in {

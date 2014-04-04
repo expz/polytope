@@ -2,6 +2,9 @@ package polytope
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.HashSet
+
+import scala.util.Sorting
 
 import ch.javasoft.polco.adapter._
 
@@ -39,7 +42,8 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
 }
 
 object PolyhedralCone {  
-  def apply(eqs: Array[Array[Int]], ieqs: Array[Array[Int]]) = new PolyhedralCone(eqs, ieqs)
+  def apply(eqs: Array[Array[Int]], ieqs: Array[Array[Int]]) = 
+      new PolyhedralCone(eqs, ieqs)
   
   /*
    * positiveWeylChamber -- Return the positive Weyl chamber for the 
@@ -57,7 +61,7 @@ object PolyhedralCone {
                           numChamberVars: Int): PolyhedralCone = {
     assert(numTotalVars >= 0)
     assert(firstChamberVar >= 0 && firstChamberVar < numTotalVars)
-    assert(numChamberVars >= 0 && firstChamberVar + numChamberVars <= numTotalVars)
+    assert(numChamberVars >= 0 && firstChamberVar+numChamberVars<=numTotalVars)
     
     // There will be a single equation
     val eq = ArrayBuffer.fill[Int](numTotalVars)(0)
@@ -90,11 +94,25 @@ object PolyhedralCone {
     }
     return new PolyhedralCone(Array(eq.toArray), ieqs.toArray)
   }
+  
+  def momentPolyhedron(ieqs: HashSet[Inequality]): PolyhedralCone = {
+    if (ieqs.size == 0) {
+      return PolyhedralCone(Array(), Array())
+    } else {
+      val dimA = ieqs.head.u.length
+      val dimB = ieqs.head.v.length
+      val dimAB = dimA*dimB
+      val totalDim = dimA + dimB + dimAB
+      return PolyhedralCone(Array[Array[Int]](),
+                            ieqs.map(_.toArray()).toArray).
+             intersection(positiveWeylChamber(totalDim, 0, dimA)).
+             intersection(positiveWeylChamber(totalDim, dimA, dimB)).
+             intersection(positiveWeylChamber(totalDim, dimA+dimB, dimAB))
+    }
+  }
 }
 
 class Edge(val edge: Array[Int]) {
-  def mult(): Array[Int] = mult(edge)
-  
   /*
    * mult(v) -- Given (v(0), ..., v(n-1)) returns (c(0), ..., c(k))
    *            where c(0) is the number of consecutive entries equal to v(0),
@@ -113,6 +131,8 @@ class Edge(val edge: Array[Int]) {
     }
     return m.toArray
   }
+  
+  override def toString: String = "(" + edge.mkString(", ") + ")"
 }
 
 
@@ -120,12 +140,11 @@ class ABEdge(edge: Array[Int], val dimA: Int) extends Edge(edge) {
   assert(dimA <= edge.length)
   
   def dimB: Int = edge.length - dimA
-  def A(): Array[Int] = edge.take(dimA)
-  def A(i: Int): Int = { assert(i >= 0 && i < dimA); return edge(i) }
-  def B(): Array[Int] = edge.drop(dimA)
-  def B(i: Int): Int = { assert(i >= 0 && i < dimB); return edge(dimA+i)}
+  val A = edge.take(dimA).sorted(Ordering.Int.reverse)  // Decreasing order
+  val B = edge.drop(dimA).sorted(Ordering.Int.reverse)
   
-  def AB(): Array[Int] = {
+  // Return a(i) + b(j) in decreasing order
+  def AB: Array[Int] = {
     val ab = Array.tabulate[Int](dimA*dimB)(n => A(n%dimA) + B(n/dimB))
     scala.util.Sorting.quickSort(ab)
     return ab.reverse
@@ -137,10 +156,10 @@ class ABEdge(edge: Array[Int], val dimA: Int) extends Edge(edge) {
     return ab.sorted(Ordering.by[(Int, Int, Int), Int](-_._3)).toArray
   }
 
-  def multA(): Array[Int] = mult(A())
-  def multB(): Array[Int] = mult(B())
-  def multAB(): Array[Int] = mult(AB())
+  def multA(): Array[Int] = mult(A)
+  def multB(): Array[Int] = mult(B)
+  def multAB(): Array[Int] = mult(AB)
   
   override def toString = 
-      "((" + A().mkString(", ") + "), (" + B().mkString(", ") + "))"
+      "((" + A.mkString(", ") + "), (" + B.mkString(", ") + "))"
 }

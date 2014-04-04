@@ -43,7 +43,7 @@ class polyhedralConeSuite extends UnitSpec {
     pc1.edges(2).map(_.edge.to[ArrayBuffer]).toSet should be (Set(ArrayBuffer(1, 1, 0, 0), ArrayBuffer(0, 0, 1, 1)))
   }
   
-  it should "create empty array if passed in-equations of varying length." in {
+  it should """create empty array if passed (in)equalities of varying length.""" in {
     val pc1 = PolyhedralCone(Array(), Array(Array(1, 1), Array(1)))
     val pc2 = PolyhedralCone(Array(Array(1, 0, -1)), Array(Array(1, 0), Array(0, 1)))
     
@@ -71,27 +71,35 @@ class polyhedralConeSuite extends UnitSpec {
                                    Array(0, 0, 0, 0, 1, -1)).deep)    
   }
   
+  "ABEdge" should "calculate the A and B edges." in {
+    val e1 = new ABEdge(Array(-1, 1, 1, -1), 2)
+    
+    e1.A.deep should be (Array(1, -1)) // Ordered decreasing!
+    e1.B.deep should be (Array(1, -1))
+  }
   "ABEdge" should "calculate the mixed AB edge." in {
     val e1 = new ABEdge(Array(0, 0, 0, 0), 2)
+    val e2 = new ABEdge(Array(-1, 1, 1, -1), 2)
     
-    e1.AB().deep should be (Array(0, 0, 0, 0).deep)
+    e1.AB.deep should be (Array(0, 0, 0, 0).deep)
+    e2.AB.deep should be (Array(2, 0, 0, -2).deep)
   }
   
-  it should "return multiplicities of A." in {
+  it should "return multiplicities of A and B." in {
     val e1 = new ABEdge(Array(), 0)
     val e2 = new ABEdge(Array(1, 1), 0)
-    val e3 = new ABEdge(Array(1, 1, 1), 3)
-    val e4 = new ABEdge(Array(-1, -1, 0, 0, -1, 0), 3)
+    val e3 = new ABEdge(Array(1, 1, -1, -1), 3)
+    val e4 = new ABEdge(Array(-1, -1, 0, 0, 1, 0), 3)
     
     e1.multA().deep should be (Array[Int]().deep)
     e2.multA().deep should be (Array[Int]().deep)
-    e3.multA().deep should be (Array(3).deep)
-    e4.multA().deep should be (Array(2, 1).deep)
+    e3.multA().deep should be (Array(2, 1).deep)
+    e4.multB().deep should be (Array(1, 2).deep)
   }
   
   "multAB" should "return multiplicities of AB pairs." in {
     val e1 = new ABEdge(Array(1, 2, 1, 2), 2)
     
-    e1.multAB().deep should be (Array(2, 2).deep)
+    e1.multAB().deep should be (Array(1, 2, 1).deep)
   }
 }

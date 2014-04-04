@@ -12,19 +12,18 @@ import com.google.ortools.linearsolver.MPConstraint;
 import com.google.ortools.linearsolver.MPSolver;
 import com.google.ortools.linearsolver.MPVariable;
 
-
-class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
+// WARNING: No sanity check on rowOfLabel
+class RectTableau(val rows: Int, 
+                  val cols: Int, 
+                  val rowOfLabel: ArrayBuffer[Int]) {
   System.loadLibrary("jniortools")
-  
-  def this(rows: Int, cols: Int) = this(rows, cols, 
-      ArrayBuffer.tabulate[Int](rows*cols)(k => k/cols + 1))
-  
+    
   val matrixForm = new ArrayBuffer[ArrayBuffer[Int]]()
   
   /*
    * getRow() -- Return the row containing the cell labeled by n.
    */
-  def getRowOf(n: Int) = tableau(n-1)
+  def getRowOf(n: Int) = rowOfLabel(n-1)
   
   /*
    * @param k Label of cell of tableau
@@ -32,26 +31,26 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
    * @result  Row and column in which the cell labeled by k lies
    */
   def apply(k: Int) = {
-    val row = tableau(k)
+    val row = rowOfLabel(k)
     var col = 1
     var i = 0
     while (i < k) {
-      if (tableau(i) == row) col += 1
+      if (rowOfLabel(i) == row) col += 1
       i += 1
     }
     (row, col) 
   }
 
-  def updateRow(label: Int, newRow: Int) = { tableau(label-1) = newRow }
+  def updateRow(label: Int, newRow: Int) = { rowOfLabel(label-1) = newRow }
 
-  def copy(): RectTableau = new RectTableau(rows, cols, tableau.clone())
+  def copy(): RectTableau = new RectTableau(rows, cols, rowOfLabel.clone())
   
   def toMatrix = {
     if (matrixForm.length == 0) {
       var i = 0
       while (i < rows) { matrixForm += ArrayBuffer[Int](); i += 1 }
       i = 0
-      while (i < rows*cols) { matrixForm(tableau(i)-1).append(i+1); i += 1 }
+      while (i < rows*cols) { matrixForm(rowOfLabel(i)-1).append(i+1); i += 1 }
     }
     matrixForm
   }
@@ -74,10 +73,11 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
         for (k <- 0 to rows-1) {
           for (l <- 0 to cols-1) {
             if (toMatrix(i)(j) < toMatrix(k)(l)) {
-              ieq.update(i, 1)
-              ieq.update(rows + j, 1)
+              // a(i) + b(j) >= a(k) + b(l)
+              ieq(i) = 1
+              ieq(rows + j) = 1
               ieq(k) -= 1
-              ieq(cols + l) -= 1
+              ieq(rows + l) -= 1
               // Add inequality to the array of inequalities
               ieqs += ieq.toArray[Int]
               // Reset ArrayBuffer to zero for next loop
@@ -97,7 +97,7 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
     if (rows*cols == 0) return true
     var i = 0
     while (i < rows*cols) { 
-      if (tableau(i) != i/cols + 1) {
+      if (rowOfLabel(i) != i/cols + 1) {
         return false
       }
       i += 1
@@ -109,15 +109,15 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
     val rowLength = ArrayBuffer.fill[Int](rows)(0)
     var i = 0
     while (i < rows*cols) {
-      if (tableau(i) > 0 && tableau(i) <= rows) {
-        rowLength(tableau(i)-1) += 1
+      if (rowOfLabel(i) > 0 && rowOfLabel(i) <= rows) {
+        rowLength(rowOfLabel(i)-1) += 1
         // If a row extends beyond the specified number of columns, 
         // then it's not standard
-        if (rowLength(tableau(i)-1) > cols) 
+        if (rowLength(rowOfLabel(i)-1) > cols) 
           return false
         // If a cell was filled in before the cell above it was filled in
         // then the column will have a decrease
-        if (tableau(i) > 1 && rowLength(tableau(i)-1) > rowLength(tableau(i)-2)) 
+        if (rowOfLabel(i) > 1 && rowLength(rowOfLabel(i)-1) > rowLength(rowOfLabel(i)-2)) 
           return false
       } else {
         return false
@@ -207,9 +207,19 @@ class RectTableau(val rows: Int, val cols: Int, tableau: ArrayBuffer[Int]) {
 }
 
 object RectTableau {
-  def apply(rows: Int, cols: Int) = new RectTableau(rows, cols)
-  def apply(rows: Int, cols: Int, tableau: ArrayBuffer[Int]) 
-    = new RectTableau(rows, cols, tableau)
+  def apply(rows: Int, cols: Int, rowOfLabel: ArrayBuffer[Int]): RectTableau = 
+      new RectTableau(rows, cols, rowOfLabel)
+  
+  def apply(rows: Int, cols: Int): RectTableau = 
+      apply(rows, cols, ArrayBuffer.tabulate[Int](rows*cols)(k => k/cols + 1))
+  
+  def apply(tableau: Array[Array[Int]]): RectTableau = 
+      apply(tableau.length, tableau(0).length,
+          {
+            val t = tableau.flatten[Int]
+            ArrayBuffer.tabulate[Int](t.length)(
+                n => t.indexWhere(_ == n+1) / tableau(0).length + 1)
+          })
   
   def standardTableaux(rows: Int, cols: Int): ListBuffer[RectTableau] = {
     /*

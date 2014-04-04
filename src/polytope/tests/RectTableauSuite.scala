@@ -20,15 +20,21 @@ class RectTableauSuite extends UnitSpec {
   "RectTableau" should "recognize trivial tableaux." in {
     val t0 = RectTableau(2, 2, ArrayBuffer(1, 2, 1, 2))
     val t1 = RectTableau(3, 3)
-    val t2 = RectTableau(3, 3, ArrayBuffer[Int](1, 1, 1, 2, 2, 2, 3, 3, 3))
-    val t3 = RectTableau(3, 3, ArrayBuffer[Int](1, 2, 1, 2, 3, 3, 1, 2, 3))
+    val t2 = RectTableau(3, 3, ArrayBuffer(1, 1, 1, 2, 2, 2, 3, 3, 3))
+    val t3 = RectTableau(3, 3, ArrayBuffer(1, 2, 1, 2, 3, 3, 1, 2, 3))
     
     t0.isTrivialTableau should be (false)
     t1.isTrivialTableau should be (true)
     t2.isTrivialTableau should be (true)
     t3.isTrivialTableau should be (false)
   }
-
+  
+  it should "be constructed by a matrix." in {
+    val t0 = RectTableau(Array(Array(1, 3), Array(2, 4)))
+    
+    t0.rowOfLabel should be (ArrayBuffer(1, 2, 1, 2))
+  }
+  
   it should "get the row of a label." in {
     val t1 = RectTableau(2, 2, ArrayBuffer[Int](1, 2, 1, 2))
     t1.getRowOf(2) should be (2)
@@ -92,9 +98,18 @@ class RectTableauSuite extends UnitSpec {
   }
   
   it should "convert a tableau to a cone." in {
-    val t1 = RectTableau(3, 3, ArrayBuffer[Int](1, 1, 2, 2, 3, 1, 3, 2, 3))
-    println(t1.toCone)
-    println(t1.toCone.ieqs.length)
+    val t1 = RectTableau(Array(Array(1, 3), Array(2, 4)))
+    val t2 = RectTableau(Array(Array(1, 2, 6),
+                               Array(3, 4, 8),
+                               Array(5, 7, 9)))
+    
+    t1.toCone.edges().map(_.edge.toVector).toSet should be (
+        Set(Vector(1, -1, 1, -1), Vector(0, 0, 1, -1)))
+    t2.toCone.edges().map(_.edge.toVector).toSet should be (
+        Set(Vector(2, -1, -1, 1, 1, -2), 
+            Vector(1, 1, -2, 1, 1, -2), 
+            Vector(1, 0, -1, 1, 0, -1), 
+            Vector(3, 0, -3, 4, 1, -5)))
   }
   
   "Standard Tableaux" should "enumerate the 2 standard 2x2 tableaux." in {
