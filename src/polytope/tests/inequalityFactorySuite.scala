@@ -49,8 +49,6 @@ class inequalityFactorySuite extends UnitSpec {
     val ieqs = InequalityFactory.inequalities(2, 2)
     val poly = PolyhedralCone.momentPolyhedron(ieqs)
     
-    // Differs from Michael's by negatives in the last four coords
-    // He intersects with the Weyl Chambers for increasing spectra
     val bravyiPoly = PolyhedralCone(Array[Array[Int]](), Array(
                                     Array(-1, 1, -1, 1, 2, 0, 0, -2),
                                     Array(-1, 1, 0, 0, 1, 1, -1, -1),

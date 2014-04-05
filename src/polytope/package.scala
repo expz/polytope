@@ -55,12 +55,16 @@ def main(args: Array[String]) {
     val poly = PolyhedralCone.momentPolyhedron(ieqs)
     
     // Print inequalities in LaTeX
-    println(dimA + "x" + dimB + "x" + dimA*dimB + " Inequalities:\n")
-    ieqs.foreach(i => println(i.toLatex() + """\\"""))
+    println(dimA + "x" + dimB + "x" + dimA*dimB + " Inequalities\n")
+    if (ieqs.size == 0) println("There are no inequalities.")
+    else ieqs.foreach(i => println(i.toLatex() + """\\"""))
     
     // Print edges
     println("\n\nVertices of moment polytope (normalized to trace zero)\n")
-    poly.edges().foreach(e => println(e))
+    if (ieqs.size == 0) 
+      println("The cone is the whole positive Weyl chamber.")
+    else     
+      poly.edges().foreach(e => println(e))
   } catch {
     case e: java.lang.NumberFormatException => {
       println("polytope: the dimensions must be numbers")

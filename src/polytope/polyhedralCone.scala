@@ -14,7 +14,16 @@ import ch.javasoft.polco.adapter._
  * WARNING: the lengths of the arrays in eqs and ieqs must be equal, but there
  *  is no check. Otherwise, an error can be thrown when calling edges(). 
  */
-class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
+class PolyhedralCone(_eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
+  // Check that eqs and ineqs all have the same number of coefficients
+  assert((_eqs ++ ieqs).map(_.length).distinct.length <= 1)
+  
+  // The Polco library has a bug: the first equality cannot be all zeros
+  private var i = 0
+  while (i < _eqs.length && _eqs(i).length != 0 && _eqs(i).find(_ != 0) == None)
+    i += 1
+  val eqs = _eqs.drop(i)
+  
   private final val PAOpt = new Options()
   PAOpt.setLoglevel(java.util.logging.Level.OFF)
   private final val PA = new PolcoAdapter(PAOpt)
@@ -23,16 +32,8 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
     return new PolyhedralCone(eqs ++ P2.eqs, ieqs ++ P2.ieqs)
   }
   
-  def nonzeroEdges(): Array[Edge] = PA.getBigIntegerRays(eqs, ieqs).map(
+  def edges(): Array[Edge] = PA.getBigIntegerRays(eqs, ieqs).map(
       arr => new Edge(arr.map(_.intValue()))) 
- 
-  def edges(): Array[Edge] = {
-    if (eqs.length == 0 && ieqs.length == 0)
-      return Array()
-    
-    nonzeroEdges() ++ Array(new Edge(Array.fill[Int](
-        if (eqs.length > 0) eqs(0).length else ieqs(0).length)(0)))
-  }
   
   def edges(dimA: Int): ArrayBuffer[ABEdge] = {
     val es = ArrayBuffer[ABEdge]()
@@ -68,19 +69,20 @@ object PolyhedralCone {
                           firstChamberVar: Int, 
                           numChamberVars: Int): PolyhedralCone = {
     assert(numTotalVars >= 0)
-    assert(firstChamberVar >= 0 && firstChamberVar < numTotalVars)
-    assert(numChamberVars >= 0 && firstChamberVar+numChamberVars<=numTotalVars)
+    assert(firstChamberVar >= 0)
+    assert(numChamberVars >= 0 && 
+        (firstChamberVar + numChamberVars <= numTotalVars ||
+        (firstChamberVar == numTotalVars && numChamberVars == 0)))
     
     // There will be a single equation
     val eq = ArrayBuffer.fill[Int](numTotalVars)(0)
     
     // Deal with the trivial cases separately
     if (numChamberVars == 0) {
-      return new PolyhedralCone(Array[Array[Int]](), Array[Array[Int]]())
+      return new PolyhedralCone(Array(), Array())
     } else if (numChamberVars == 1) {
-      val ieqs = Array(eq.toArray)
       eq(firstChamberVar) = 1
-      return new PolyhedralCone(Array(eq.toArray), ieqs)
+      return new PolyhedralCone(Array(eq.toArray), Array())
     }
     
     // The sum of chamber variables is zero (trace zero assumption) 
@@ -153,14 +155,14 @@ class ABEdge(edge: Array[Int], val dimA: Int) extends Edge(edge) {
   
   // Return a(i) + b(j) in decreasing order
   def AB: Array[Int] = {
-    val ab = Array.tabulate[Int](dimA*dimB)(n => A(n%dimA) + B(n/dimB))
+    val ab = Array.tabulate[Int](dimA*dimB)(n => A(n%dimA) + B(n/dimA))
     scala.util.Sorting.quickSort(ab)
     return ab.reverse
   } 
       
   def ABTriples(): Array[(Int,Int,Int)] = {
     val ab = Array.tabulate[(Int, Int, Int)](dimA*dimB)(
-                 n => (n%dimA, n/dimB, A(n%dimA)+ B(n/dimB)))
+                 n => (n%dimA, n/dimA, A(n%dimA)+ B(n/dimA)))
     return ab.sorted(Ordering.by[(Int, Int, Int), Int](-_._3)).toArray
   }
 

@@ -56,19 +56,15 @@ class RectTableauSuite extends UnitSpec {
   it should "recognize standard tableaux." in {
     val t1 = RectTableau(0, 0, ArrayBuffer[Int]())
     val t2 = RectTableau(1, 1, ArrayBuffer[Int](1))
-    val t3 = RectTableau(1, 1, ArrayBuffer[Int](-1))
-    val t4 = RectTableau(2, 2, ArrayBuffer(1, 1, 1, 2))
-    val t5 = RectTableau(2, 2, ArrayBuffer(2, 2, 3, 3)) 
-    val t6 = RectTableau(2, 2, ArrayBuffer(2, 2, 1, 1))
-    val t7 = RectTableau(3, 3, ArrayBuffer(1, 2, 1, 2, 3, 3, 1, 2, 3))
+    val t3 = RectTableau(2, 2, ArrayBuffer(1, 1, 2, 2)) 
+    val t4 = RectTableau(2, 2, ArrayBuffer(2, 2, 1, 1))
+    val t5 = RectTableau(3, 3, ArrayBuffer(1, 2, 1, 2, 3, 3, 1, 2, 3))
     
     t1.isStandardTableau should be (true)
     t2.isStandardTableau should be (true)
-    t3.isStandardTableau should be (false)
+    t3.isStandardTableau should be (true)
     t4.isStandardTableau should be (false)
-    t5.isStandardTableau should be (false)
-    t6.isStandardTableau should be (false)
-    t7.isStandardTableau should be (true)
+    t5.isStandardTableau should be (true)
   }
   
   it should "recognize admissible tableaux." in {
