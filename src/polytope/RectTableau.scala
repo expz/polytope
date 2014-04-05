@@ -12,10 +12,15 @@ import com.google.ortools.linearsolver.MPConstraint;
 import com.google.ortools.linearsolver.MPSolver;
 import com.google.ortools.linearsolver.MPVariable;
 
-// WARNING: No sanity check on rowOfLabel
 class RectTableau(val rows: Int, 
                   val cols: Int, 
                   val rowOfLabel: ArrayBuffer[Int]) {
+  
+  // Check that rowOfLabel describes a rectangular shape
+  assert(rowOfLabel.length == rows*cols)
+  assert(Array.tabulate[Int](rows)(r => rowOfLabel.count(_ == r+1)).find(_ != cols) == None)
+  
+  // Load library for doing MIP to check admissibility
   System.loadLibrary("jniortools")
     
   val matrixForm = new ArrayBuffer[ArrayBuffer[Int]]()
@@ -56,13 +61,14 @@ class RectTableau(val rows: Int,
   }
 
   def toCone = {
-    assert(rows > 0)
-    assert(cols > 0)
     // Initialize the cone with the intersection of positive Weyl chambers
     val P = PolyhedralCone.positiveWeylChamber(rows + cols, 0, rows).
             intersection(
               PolyhedralCone.positiveWeylChamber(rows + cols, rows, cols)
             )
+    // If this is a trivial tableau, then return the positive Weyl Chamber
+    if (rows == 0 || cols == 0) P
+    
     // Initialize the inequality list to be empty
     val ieqs = Array.newBuilder[Array[Int]]
     // Initialize the inequality to be 0 >= 0
