@@ -1,5 +1,12 @@
 package object polytope {
 
+//////////////////////////////////////////
+// Version
+val bigVersion = 0
+val littleVersion = 95
+//
+//////////////////////////////////////////
+
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 import scala.reflect.ClassTag
@@ -16,13 +23,42 @@ type Permutation = Array[Int]
 
 def main(args: Array[String]) {
   try {
-    if (args.length == 1 && args(0) == "--help") {
-      println("Usage: polytope DIM_A DIM_B")
-      println("Calculate the entanglement polytope for mixed states of two distinguishable")
-      println("  particles with DIM_A and DIM_B degrees of freedom respectively")
+    if (args.length == 0 || (args.length == 1 && args(0) == "--help")) {
+      println("Usage: polytope [OPTIONS] DIM_A DIM_B")
+      println("Calculate and print the vertices of the entanglement polytope for mixed states")
+      println("  of two distinguishable particles with DIM_A and DIM_B degrees of freedom")
+      println()
+      println("  -a, --all\t\tPrint extended output including: (TODO)")
+      println("           \t\tinequalities defining polytope")
+      println("           \t\tpermutations and edges corresponding to inequalities")
+      println("           \t\tvertices of polytope")
+      println("  -c, --computer\tPrint inequalities in computer")
+      println("                \treadable format (TODO)")
+      println("                \t(overrides -a, -p, --perm, --vertices)")
+      println("  -p, --plaintext\tPrint equations in plain text")
+      println("                 \t(Default is LaTeX) (TODO)")
+      println("      --perms\t\tAlso print permutations and edges corresponding")
+      println("             \t\tto inequalities (TODO)")
+      println("  -v, --verbose\t\tPrint notifications of progress (TODO)")
+      println("      --vertices\tAlso print vertices of polytope (TODO)")
+      println()
+      println("Used alone")
+      println()
+      println("      --help\t\tDisplay this help and exit")
+      println("      --version\t\tOutput version information and exit")
       println()
       println("Report bugs to jskowera@gmail.com")
       println("Source code available at <https://github.com/expz/entanglement-polytopes/>" )
+      return
+    } else if (args.length == 1 && args(0) == "--version") {
+      println("polytope %d.%02d".format(bigVersion, littleVersion))
+      println("Copyright (C) 2014 ETH Zürich")
+      println("License Simplified BSD Style <http://intra.csb.ethz.ch/tools/LICENSE.txt>")
+      println("This is free software: you are free to change and redistribute it.")
+      println("There is NO WARRANTY or GUARANTEE OF FITNESS FOR A PARTICULAR PURPOSE,")
+      println("to the extent permitted by law.")
+      println()
+      println("Written by Jonathan Skowera.")
       return
     }
     if (args.length != 2) {

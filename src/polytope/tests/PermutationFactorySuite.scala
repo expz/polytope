@@ -37,7 +37,7 @@ class PermutationFactorySuite extends UnitSpec {
     PermutationFactory.shuffles(m2)(0).sameElements(Array(1,2,3)) should be (true)    
   }
 
-  it should "correctly calculate shuffles for two or three multiplicites." in {
+  it should "calculate shuffles for two or three multiplicites." in {
     val m1 = Array(2, 2)
     val m2 = Array(1, 1, 1)
     val m3 = Array(2, 1, 2)
@@ -62,6 +62,38 @@ class PermutationFactorySuite extends UnitSpec {
     res3.length should be (30)
   }
   
+  it should "calculate shuffles of a given length." in {
+    val m1 = Array(2, 1, 2)
+    val m2 = Array(1, 1, 3, 2)
+    
+    val res11 = PermutationFactory.shuffles(m1).filter(reducedWord(_).length == 0)
+    val res12 = PermutationFactory.shuffles(m1).filter(reducedWord(_).length == 4)
+    val res21 = PermutationFactory.shuffles(m2).filter(reducedWord(_).length == 1)
+    val res22 = PermutationFactory.shuffles(m2).filter(reducedWord(_).length == 3)
+    
+    val lres11 = PermutationFactory.shufflesOfGivenLength(m1, 0)
+    val lres12 = PermutationFactory.shufflesOfGivenLength(m1, 4)
+    val lres21 = PermutationFactory.shufflesOfGivenLength(m2, 1)
+    val lres22 = PermutationFactory.shufflesOfGivenLength(m2, 3)
+    
+    println(lres11.map(_.toVector))
+    println(res11.map(_.toVector))
+    println()
+    println(lres12.map(_.toVector))
+    println(res12.map(_.toVector))
+    println()
+    println(lres21.map(_.toVector))
+    println(res21.map(_.toVector))
+    println()
+    println(lres22.map(_.toVector))
+    println(res22.map(_.toVector))
+    println()
+    
+    lres11.length should be (res11.length)
+    lres12.length should be (res12.length)
+    lres21.length should be (res21.length)
+    lres22.length should be (res22.length)
+  }
   /* WARNING: Requires lots of memory
   it should "calculate shuffles of length twelve within two seconds." in {
     val m1 = Array(2, 1, 2, 1, 3, 2)
