@@ -12,13 +12,11 @@ object InequalityFactory {
       for (edge <- T.toCone.edges(dimA)) {
         for (u <- PermutationFactory.shuffles(edge.multA)) {
           for (v <- PermutationFactory.shuffles(edge.multB)) {
-            for (w <- PermutationFactory.shuffles(edge.multAB)) {
-              if (reducedWord(u).length + reducedWord(v).length == 
-                                                        reducedWord(w).length) {
-                // In this case, c(u,v,w,T) will be a constant
-                if (c(u, v, w, T).getOrElse(0L, 0) == 1) {
-                  ieqs += new Inequality(u, v, w, edge)
-                }
+            for (w <- PermutationFactory.shufflesOfGivenLength(
+                edge.multAB, reducedWord(u).length + reducedWord(v).length)) {
+              // In this case, c(u,v,w,T) will be a constant
+              if (c(u, v, w, T).getOrElse(0L, 0) == 1) {
+                ieqs += new Inequality(u, v, w, edge)
               }
             }
           }

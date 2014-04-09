@@ -61,38 +61,82 @@ object PermutationFactory {
   
   def shufflesOfGivenLength(mults: Array[Int], numInversions: Int): 
         ArrayBuffer[Permutation] = {
+    // Buffer to hold the generated shuffles
     val perms = ArrayBuffer[Permutation]()
-    val n = mults.sum    // Length of permutations (Number of symbols)
+    
+    // Size of permutations (Number of symbols)
+    val n = mults.sum    
+    
+    // When moving S(i) to the beginning of the suffix, it should not pass any
+    // integer less than or equal to dontPass(i)
     val dontPass = ArrayBuffer[Int]()
     var total: Int = 0
-    for (m <- mults) {
-      total += m
-      dontPass.appendAll(for (i <- 1 to m) yield total)
+    var i = 0
+    while (i < mults.length) {
+      total += mults(i)
+      var j = 1
+      while (j <= mults(i)) {
+        dontPass.append(total)
+        j += 1
+      }
+      i += 1
     }
     
-    /*
-    Generate all permutations of the ordered list S with k inversions and add
-    them to perms (after adding the optional suffix).
-    */  
-    @inline
-    def delete[A](v: Array[A], n: Int) = v.filter(_ != n)
+    // Generate the shuffles
+    moveToSuffix(Array.tabulate[Int](n)(_+1), numInversions, Array[Int]())
     
-    def gen(S: Array[Int], k: Int, suffix: Array[Int]): Unit = {
-      if (k == 0) {
+    //////////////////////////////////
+    // HELPER FUNCTIONS
+    
+    // WARNING: No check that index is within valid range
+    def delete(v: Array[Int], index: Int) = 
+        Array.tabulate(v.length-1)(n => if (n < index) v(n) else v(n+1)) 
+    //def delete[A](v: Array[A], index: Int) = 
+    //    v.dropRight(v.length-index) + v.drop(index+1)
+      
+    /*
+     * 
+     * For every element of S 
+     *   If it doesn't break the shuffle property
+     *     Move it to the front of the suffix
+     *     Then recurse
+     *
+     * Begin with:
+     * 
+     * 1, 2, 3, 4 + (empty)
+     * remainInv = 4
+     * 
+     * 
+     * Recurse to:
+     * 
+     * S = 1, 3, 4 + 2
+     * remainInv = 2
+     * 
+     * S = 1, 2, 3 + 4
+     * remainInv = 4
+     *
+     */    
+    def moveToSuffix(S: Array[Int], remainInv: Int, suffix: Array[Int]): Unit = {
+      if (remainInv == 0) {
         perms.append(S ++ suffix)
       } else {
+        var hops = 0
         val n = S.length
-        for (i <- (1 to n)) {
-          if (n - (i+1) <= k && k <= binomial(n-1, 2) + n - (i+1)) {
-          // If moving S[i] to the suffix does not break the shuffle property
-          if (i+1 >= S.length || S(i+1) > dontPass(i))
-            gen(delete(S, i), k - n + (i+1), suffix :+ S(i))
+        var i = 0
+        while (i < n) {
+          hops = n - i - 1
+          if (hops <= remainInv && remainInv <= binomial(n-1, 2) + hops) {
+            // If moving S[i] to the suffix does not break the shuffle property
+            if (i == n-1 || S(i+1) > dontPass(S(i)-1))
+              moveToSuffix(delete(S, i), remainInv - hops, S(i) +: suffix)
+          }
+          i += 1     
         }
       }
-      }
     }
-    gen((1 to n).toArray, numInversions, Array[Int]())
+    
+    // Return shuffles
     return perms
   }
-  
+   
 }
