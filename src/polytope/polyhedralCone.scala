@@ -14,22 +14,43 @@ import ch.javasoft.polco.adapter._
  * WARNING: the lengths of the arrays in eqs and ieqs must be equal, but there
  *  is no check. Otherwise, an error can be thrown when calling edges(). 
  */
-class PolyhedralCone(_eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
+class PolyhedralCone(_eqs: Array[Array[Int]], val _ieqs: Array[Array[Int]]) {
   // Check that eqs and ineqs all have the same number of coefficients
-  assert((_eqs ++ ieqs).map(_.length).distinct.length <= 1)
+  assert((_eqs ++ _ieqs).map(_.length).distinct.length <= 1)
   
   // The Polco library has a bug: the first equality cannot be all zeros
+  // The Polco library sometimes gives errors for passing empty arrays
   private var i = 0
   while (i < _eqs.length && _eqs(i).length != 0 && _eqs(i).find(_ != 0) == None)
     i += 1
-  val eqs = _eqs.drop(i)
+  val eqs = if (_eqs.length > i) {
+    _eqs.drop(i)
+  } else if (_ieqs.length > 0) {
+    Array(Array.fill[Int](_ieqs(0).length)(0))
+  } else {
+    Array(Array(0))
+  }
+  
+  // The Polco library sometimes gives errors for passing empty arrays
+  val ieqs = if (_ieqs.length > 0) {
+    _ieqs
+  } else if (eqs.length > 0) {
+    Array(Array.fill[Int](eqs(0).length)(0))
+  } else {
+    Array(Array(0))
+  }
   
   private final val PAOpt = new Options()
   PAOpt.setLoglevel(java.util.logging.Level.OFF)
   private final val PA = new PolcoAdapter(PAOpt)
   
   def intersection(P2: PolyhedralCone): PolyhedralCone = {
-    return new PolyhedralCone(eqs ++ P2.eqs, ieqs ++ P2.ieqs)
+    val eqsToAdd = if (eqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else eqs
+    val ieqsToAdd = if (ieqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else ieqs
+    val P2eqsToAdd = if (P2.eqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else P2.eqs
+    val P2ieqsToAdd = if (P2.ieqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else P2.ieqs
+      
+    return new PolyhedralCone(eqsToAdd ++ P2eqsToAdd, ieqsToAdd ++ P2ieqsToAdd)
   }
   
   def edges(): Array[Edge] = PA.getBigIntegerRays(eqs, ieqs).map(

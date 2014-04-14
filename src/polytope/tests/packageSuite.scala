@@ -11,6 +11,9 @@ import scala.collection.immutable.Set
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 
+abstract class UnitSpec extends FlatSpec with ShouldMatchers with
+  OptionValues with Inside with Inspectors
+
 @RunWith(classOf[JUnitRunner])
 class packageSuite extends UnitSpec {
   "isInteger" should "return true iff a polynomial is an integer." in {

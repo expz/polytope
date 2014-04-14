@@ -48,7 +48,7 @@ class polyhedralConeSuite extends UnitSpec {
     pc1.edges(2).map(_.edge.to[ArrayBuffer]).toSet should be (Set(ArrayBuffer(1, 1, 0, 0), ArrayBuffer(0, 0, 1, 1)))
   }
     
-  it should "correctly make a trivial Weyl chamber." in {
+  it should "make a trivial Weyl chamber." in {
     val wc1 = PolyhedralCone.positiveWeylChamber(1, 0, 1)
     wc1.edges().map(_.edge).deep should be (Array(Array(1)).deep) 
   }

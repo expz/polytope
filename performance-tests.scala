@@ -61,32 +61,52 @@ lb += (1 to 24).toArray
 val result = lb.toArray
 }
 
-// 107 microseconds
+// 26.5 micros
 def abtest2() = {
-val dimA = 3
-val dimB = 3
-val ieq = ArrayBuffer.fill[Int](dimA+dimB)(0)
-for (i <- 0 to 1) {
-for (j <- 0 to 1) {
-for (k <- 0 to 1) {
-for (l <- 0 to 1) {
-ieq.update(i, 1)
-ieq.update(dimA + j, 1)
+val N = 3
+val ieqs = ArrayBuffer[Array[Int]]()
+for (i <- 0 until N) {
+for (j <- 0 until N) {
+for (k <- 0 until N) {
+for (l <- 0 until N) {
+val ieq = ArrayBuffer.fill[Int](2*N)(0)
+ieq(i) = 1
+ieq(N + j) = 1
 ieq(k) -= 1
-ieq(dimA + l) -= 1
-ieq.toArray
+ieq(N + l) -= 1
+ieqs.append(ieq.toArray)
 }}}}
 }
 
-// 203 microseconds
+// 23.0 micros
 def atest2() = {
-val dimA = 3
-val dimB = 3
-for (i <- 0 to 1) {
-for (j <- 0 to 1) {
-for (k <- 0 to 1) {
-for (l <- 0 to 1) {
-val ieq = Array.tabulate[Int](dimA+dimB)(n => {
+val N = 3
+val ieqs = ArrayBuffer[Array[Int]]()
+for (i <- 0 until N) {
+for (j <- 0 until N) {
+for (k <- 0 until N) {
+for (l <- 0 until N) {
+val ieq = Array.tabulate[Int](2*N)(n => {
+if (n == i) {
+if(k == i) 0
+else 1
+} else if (n == N + j) {
+if(l == j) 0
+else 1
+} else if (n == k) {
+-1
+} else if (n == N + l) {
+-1
+} else {
+0
+}
+})
+ieqs.append(ieq)
+}}}}
+}
+
+// ???
+def f(n: Int, dimA: Int, i: Int, j: Int, k: Int, l: Int) = {
 if (n == i) {
 if(k == i) 0
 else 1
@@ -100,9 +120,20 @@ else 1
 } else {
 0
 }
-})
+}
+
+def atest3() = {
+val N = 3
+val ieqs = ArrayBuffer[Array[Int]]()
+for (i <- 0 until N) {
+for (j <- 0 until N) {
+for (k <- 0 until N) {
+for (l <- 0 until N) {
+val ieq = Array.tabulate[Int](dimA+dimB)(n => f(n, dimA, i, j, k, l))
+ieqs.append(ieq)
 }}}}
 }
+
 
 // 200 microseconds
 def abuildtest() = {
@@ -136,11 +167,9 @@ ieq.result
 
 ========================
 
-scala> def looptest(n: Int) = { val ab = ArrayBuffer[Int](); for (i <- 1 to n) { ab.append(i) }; }
-looptest: (n: Int)Unit
+def looptest(n: Int) = { val ab = ArrayBuffer[Int](); for (i <- 1 to n) { ab.append(i) }; }
 
-scala> def looptest2(n: Int) = { val ab = ArrayBuffer[Int](); var i = 1; while (i <= n) { ab.append(i); i += 1 }; }
-looptest2: (n: Int)Unit
+def looptest2(n: Int) = { val ab = ArrayBuffer[Int](); var i = 1; while (i <= n) { ab.append(i); i += 1 }; }
 
 scala> test(1000, looptest(10000))
 res14: Long = 574969

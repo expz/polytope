@@ -10,6 +10,8 @@ bin:\
 lib/polco.jar:\
 lib/scalatest_2.10-2.1.0.jar:\
 lib/junit-4.8.2.jar:\
-lib/linux_x86/com.google.ortools.jar \
+lib/linux_x86/com.google.ortools.jar:\
+lib/scallop_2.10-0.9.5.jar:\
+ \
 polytope.package \
 $@
