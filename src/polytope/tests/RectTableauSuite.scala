@@ -11,9 +11,6 @@ import polytope._
 import scala.collection.immutable.Set
 import scala.collection.mutable.ArrayBuffer
 
-abstract class UnitSpec extends FlatSpec with ShouldMatchers with
-  OptionValues with Inside with Inspectors
-
 @RunWith(classOf[JUnitRunner])
 class RectTableauSuite extends UnitSpec {
   

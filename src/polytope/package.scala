@@ -4,12 +4,16 @@ package object polytope {
 // Version
 val bigVersion = 0
 val littleVersion = 95
+val versionString = "polytope %d.%02d".format(bigVersion, littleVersion)
 //
 //////////////////////////////////////////
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 import scala.reflect.ClassTag
+
+// Scallop library for command line parsing
+import org.rogach.scallop._
 
 type Term = Long
 type Polynomial = ArrayBuffer[Long]
@@ -21,53 +25,74 @@ type Polynomial = ArrayBuffer[Long]
  */
 type Permutation = Array[Int]
 
+
+
 def main(args: Array[String]) {
+  
+  val versionOutput = versionString + "\n" +
+    "Copyright (C) 2014 ETH Zürich\n" +
+    "License Simplified BSD Style <http://intra.csb.ethz.ch/tools/LICENSE.txt>\n" +
+    "This is free software: you are free to change and redistribute it.\n" +
+    "There is NO WARRANTY or GUARANTEE OF FITNESS FOR A PARTICULAR PURPOSE,\n" +
+    "to the extent permitted by law.\n" +
+    "\n" +
+    "Written by Jonathan Skowera."
   try {
-    if (args.length == 0 || (args.length == 1 && args(0) == "--help")) {
-      println("Usage: polytope [OPTIONS] DIM_A DIM_B")
-      println("Calculate and print the vertices of the entanglement polytope for mixed states")
-      println("  of two distinguishable particles with DIM_A and DIM_B degrees of freedom")
-      println()
-      println("  -a, --all\t\tPrint extended output including: (TODO)")
-      println("           \t\tinequalities defining polytope")
-      println("           \t\tpermutations and edges corresponding to inequalities")
-      println("           \t\tvertices of polytope")
-      println("  -c, --computer\tPrint inequalities in computer")
-      println("                \treadable format (TODO)")
-      println("                \t(overrides -a, -p, --perm, --vertices)")
-      println("  -p, --plaintext\tPrint equations in plain text")
-      println("                 \t(Default is LaTeX) (TODO)")
-      println("      --perms\t\tAlso print permutations and edges corresponding")
-      println("             \t\tto inequalities (TODO)")
-      println("  -v, --verbose\t\tPrint notifications of progress (TODO)")
-      println("      --vertices\tAlso print vertices of polytope (TODO)")
-      println()
-      println("Used alone")
-      println()
-      println("      --help\t\tDisplay this help and exit")
-      println("      --version\t\tOutput version information and exit")
-      println()
-      println("Report bugs to jskowera@gmail.com")
-      println("Source code available at <https://github.com/expz/entanglement-polytopes/>" )
-      return
-    } else if (args.length == 1 && args(0) == "--version") {
-      println("polytope %d.%02d".format(bigVersion, littleVersion))
-      println("Copyright (C) 2014 ETH Zürich")
-      println("License Simplified BSD Style <http://intra.csb.ethz.ch/tools/LICENSE.txt>")
-      println("This is free software: you are free to change and redistribute it.")
-      println("There is NO WARRANTY or GUARANTEE OF FITNESS FOR A PARTICULAR PURPOSE,")
-      println("to the extent permitted by law.")
-      println()
-      println("Written by Jonathan Skowera.")
-      return
-    }
-    if (args.length != 2) {
-      println("polytope: wrong number of arguments (" + args.length + ")")
-      println("Usage: polytope DIM_A DIM_B")
-      return
+    val Conf = new ScallopConf(args.toList) {
+      banner("""Usage: polytope [OPTIONS] DIM_A DIM_B
+               |Calculate and print the vertices of the entanglement polytope for mixed states
+               |of two distinguishable particles with DIM_A and DIM_B degrees of freedom
+               |""".stripMargin)
+  
+      val all = tally("all", descr = 
+        "Print extended output including: " +
+        "inequalities defining polytope, " +
+        "permutations and edges corresponding to inequalities, " +
+        "vertices of polytope")
+      val computer = tally("computer", descr =
+        "Print inequalities in computer readable format " +
+        "(overrides other options)")
+      val plaintext = tally("plaintext", descr = 
+        "Print equations in plain text (Default is LaTeX) (TODO)")
+      val perms = tally("perms", noshort = true, descr =
+        "Also print permutations and edges corresponding to inequalities (TODO)")
+      val verbose = tally("verbose", descr = 
+        "Print notifications of progress (TODO)")
+      val vertices = tally("vertices", noshort = true, descr =
+        "Also print vertices of polytope (TODO)")
+      val help = tally("help", noshort = true, descr =
+        "Display this help and exit")
+      val version = tally("version", noshort = true, descr =
+        "Output version information and exit")
+  
+      footer("\n" +
+             "Report bugs to jskowera@gmail.com\n" +
+             "Source code available at " +
+             "<https://github.com/expz/entanglement-polytopes/>")
+      
+      val dimA = trailArg[Int](name = "DIM_A", required = false, hidden = true)
+      val dimB = trailArg[Int](name = "DIM_B", required = false, hidden = true)
     }
     
-    val (dimA, dimB) = (args(0).toInt, args(1).toInt)
+    if (Conf.help() > 0) {
+      Conf.builder.printHelp
+      return
+    } else if (Conf.version() > 0) {
+      println(versionOutput)
+      return
+    }/*
+    if (!Conf.verified) {
+      println("Not verified!")
+      return
+    }*/
+    if (!Conf.dimA.isSupplied) {
+      println("polytope: two dimensions expected but none found")
+      return
+    } else if (!Conf.dimB.isSupplied) {
+      println("polytope: two dimensions expected but one found")
+      return
+    }
+    val (dimA, dimB) = (Conf.dimA(), Conf.dimB())
     if (dimA < 0 || dimB < 0) {
       println("polytope: dimensions must be non-negative")
       return
