@@ -63,6 +63,7 @@ class Inequality(val u: Permutation,
                act(inverse(w), e.AB)
                
   override def hashCode() = coeffs.deep.hashCode()
+  
   override def equals(a: Any) = a match {
     case ieq: Inequality => ieq.hashCode() == this.hashCode()
     case _ => false
