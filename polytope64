@@ -2,7 +2,7 @@ JAVA="/usr/lib/jvm/java-7-openjdk-i386/bin/java"
 
 $JAVA \
 -Duser.dir=`pwd` \
--Djava.library.path=lib/linux_x86 \
+-Djava.library.path=lib/linux_amd64 \
 -Dfile.encoding=UTF-8 \
 -Xbootclasspath/p:lib/scala-library.jar:lib/scala-reflect.jar \
 -classpath \
@@ -10,7 +10,7 @@ bin:\
 lib/polco.jar:\
 lib/scalatest_2.10-2.1.0.jar:\
 lib/junit-4.8.2.jar:\
-lib/linux_x86/com.google.ortools.jar:\
+lib/linux_amd64/com.google.ortools.jar:\
 lib/scallop_2.10-0.9.5.jar:\
 lib/jfreechart-1.0.17.jar:\
 lib/jcommon-1.0.21.jar:\
