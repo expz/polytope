@@ -45,10 +45,14 @@ class PolyhedralCone(_eqs: Array[Array[Int]], val _ieqs: Array[Array[Int]]) {
   private final val PA = new PolcoAdapter(PAOpt)
   
   def intersection(P2: PolyhedralCone): PolyhedralCone = {
-    val eqsToAdd = if (eqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else eqs
-    val ieqsToAdd = if (ieqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else ieqs
-    val P2eqsToAdd = if (P2.eqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else P2.eqs
-    val P2ieqsToAdd = if (P2.ieqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else P2.ieqs
+    val eqsToAdd = 
+      if (eqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else eqs
+    val ieqsToAdd = 
+      if (ieqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else ieqs
+    val P2eqsToAdd = 
+      if (P2.eqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else P2.eqs
+    val P2ieqsToAdd = 
+      if (P2.ieqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else P2.ieqs
       
     return new PolyhedralCone(eqsToAdd ++ P2eqsToAdd, ieqsToAdd ++ P2ieqsToAdd)
   }
@@ -163,6 +167,13 @@ class Edge(val edge: Array[Int]) {
     return m.toArray
   }
   
+  // WARNING: Returns true if a is an ABEdge with different Adim but same total
+  // dimension
+  override def equals(a: Any): Boolean = a match {
+    case e: Edge => e.edge.deep == this.edge.deep
+    case _ => false
+  }
+  
   override def toString: String = "(" + edge.mkString(", ") + ")"
 }
 
@@ -173,6 +184,14 @@ class ABEdge(edge: Array[Int], val dimA: Int) extends Edge(edge) {
   def dimB: Int = edge.length - dimA
   val A = edge.take(dimA).sorted(Ordering.Int.reverse)  // Decreasing order
   val B = edge.drop(dimA).sorted(Ordering.Int.reverse)
+  
+  override def equals(a: Any) = a match {
+    case abedge: ABEdge => abedge.A.deep == this.A.deep && 
+                           abedge.B.deep == this.B.deep
+    case _ => false
+  }
+  
+  override def hashCode() = this.A.deep.hashCode() + this.B.deep.hashCode()
   
   // Return a(i) + b(j) in decreasing order
   def AB: Array[Int] = {
