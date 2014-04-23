@@ -10,10 +10,14 @@ val versionString = "polytope %d.%02d".format(bigVersion, littleVersion)
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 // Scallop library for command line parsing
 import org.rogach.scallop._
+import org.rogach.scallop.exceptions._
+
+import scala.io._
 
 type Term = Long
 type Polynomial = ArrayBuffer[Long]
@@ -38,40 +42,61 @@ def main(args: Array[String]) {
     "\n" +
     "Written by Jonathan Skowera."
   try {
-    val Conf = new ScallopConf(args.toList) {
+    object Conf extends ScallopConf(args.toList) {
       banner("""Usage: polytope [OPTIONS] DIM_A DIM_B
                |Calculate and print the vertices of the entanglement polytope for mixed states
                |of two distinguishable particles with DIM_A and DIM_B degrees of freedom
                |""".stripMargin)
   
-      val all = tally("all", descr = 
-        "Print extended output including: " +
-        "inequalities defining polytope, " +
-        "permutations and edges corresponding to inequalities, " +
-        "vertices of polytope")
+      val mixed = new Subcommand("mixed") {
+        val dims = trailArg[List[Int]](name="dims", required=true, hidden=true, 
+                        validate=(L => L.map(_ > 0).reduce(_ && _)))
+        val f = opt[String]("cubiclefile",
+                             short='f',
+                             descr="Only calculate inequalities associated to a particular cubicle (Useful for splitting up calculation into parts)")
+        val all = tally("all", 
+                        descr="Output all calculated polytope features (TODO)")
+        val plaintext = tally("plaintext", descr = 
+          "Print equations in plain text (Default is LaTeX) (TODO)")
+      }
+      val pure = new Subcommand("pure") {
+        val dims = trailArg[List[Int]](name="dims", required=true, hidden=true,
+                        validate=(L => L.map(_ > 0).reduce(_ && _)))
+        /*
+        val dimA = trailArg[Int](name="dimA", required=true, hidden=true)
+        val dimB = trailArg[Int](name="dimB", required=true, hidden=true)
+        val dimC = trailArg[Int](name="dimC", required=false, hidden=true)
+        val dimD = trailArg[Int](name="dimD", required=false, hidden=true)
+        * 
+        */
+        val all = tally("all", 
+                        descr="Output all calculated polytope features (TODO)")
+        val plaintext = tally("plaintext", descr = 
+          "Print equations in plain text (Default is LaTeX) (TODO)")
+      }
+      val cubicles = new Subcommand("cubicles") {
+        val dimA = trailArg[Int](name="dimA", required=true, hidden=true,
+                                 validate=(_>=0))
+        val dimB = trailArg[Int](name="dimB", required=true, hidden=true,
+                                 validate=(_>=0))
+        // Includes permutations and edges corresponding to inequalities
+        // Includes vertices of polytope
+        // Includes inequalities of polytope
+      }
+      val help = tally("help", noshort=true, descr="Display this help and exit")
       val computer = tally("computer", descr =
-        "Print inequalities in computer readable format " +
-        "(overrides other options)")
-      val plaintext = tally("plaintext", descr = 
-        "Print equations in plain text (Default is LaTeX) (TODO)")
-      val perms = tally("perms", noshort = true, descr =
-        "Also print permutations and edges corresponding to inequalities (TODO)")
-      val verbose = tally("verbose", descr = 
-        "Print notifications of progress (TODO)")
-      val vertices = tally("vertices", noshort = true, descr =
-        "Also print vertices of polytope (TODO)")
-      val help = tally("help", noshort = true, descr =
-        "Display this help and exit")
-      val version = tally("version", noshort = true, descr =
-        "Output version information and exit")
-  
+          "Output in computer readable format " +
+          "(overrides other options)")
+      val verbose = tally("verbose", 
+                          descr="Print notifications of progress (TODO)")
+      val version = tally("version", 
+                          noshort=true, 
+                          descr="Output version information and exit")
       footer("\n" +
              "Report bugs to jskowera@gmail.com\n" +
              "Source code available at " +
              "<https://github.com/expz/entanglement-polytopes/>")
       
-      val dimA = trailArg[Int](name = "DIM_A", required = false, hidden = true)
-      val dimB = trailArg[Int](name = "DIM_B", required = false, hidden = true)
     }
     
     if (Conf.help() > 0) {
@@ -80,52 +105,156 @@ def main(args: Array[String]) {
     } else if (Conf.version() > 0) {
       println(versionOutput)
       return
-    }/*
-    if (!Conf.verified) {
-      println("Not verified!")
-      return
-    }*/
-    if (!Conf.dimA.isSupplied) {
-      println("polytope: two dimensions expected but none found")
-      return
-    } else if (!Conf.dimB.isSupplied) {
-      println("polytope: two dimensions expected but one found")
-      return
     }
-    val (dimA, dimB) = (Conf.dimA(), Conf.dimB())
-    if (dimA < 0 || dimB < 0) {
-      println("polytope: dimensions must be non-negative")
-      return
-    }
-    if (dimA*dimB >= 9) {
-      println("polytope: the polytope will have dimensions " + dimA + "x" + dimB + "x" + dimA*dimB)
-      println("WARNING: THIS COMPUTATION COULD TAKE HOURS ON A SINGLE CPU")
-      println("Are you sure you want to continue [Y/n]?")
-      var ans = readChar()
-      while (ans != 'Y' && ans != 'n') {
-        println("Please enter 'Y' for yes or 'n' for no")
-        ans = readChar()
-      }
-      if (ans == 'n') {
-        println("polytope: computation aborted at user request")
-        return
-      }
-    }
-    //val (dimA, dimB) = (2, 2)
-    val ieqs = InequalityFactory.inequalities(dimA, dimB)
-    val poly = PolyhedralCone.momentPolyhedron(ieqs)
+    val printProgress = Conf.verbose.get match 
+                          { case None => false; case _ => true }
     
-    // Print inequalities in LaTeX
-    println(dimA + "x" + dimB + "x" + dimA*dimB + " Inequalities\n")
-    if (ieqs.size == 0) println("There are no inequalities.")
-    else ieqs.foreach(i => println(i.toLatex() + """\\"""))
-    
-    // Print edges
-    println("\n\nVertices of moment polytope (normalized to trace zero)\n")
-    if (ieqs.size == 0) 
-      println("The cone is the whole positive Weyl chamber.")
-    else     
-      poly.edges().foreach(e => println(e))
+    Conf.subcommand match {
+      /**************************************
+       * Calculate a mixed polytope
+       */
+      case Some(Conf.mixed) => {
+        val dims = if (Conf.mixed.dims().length == 1) 
+                     List(Conf.mixed.dims()(0), 0) 
+                   else 
+                     Conf.mixed.dims()
+
+        if (dims.length > 2) {
+          println("polytope: feature not implemented; mixed accepts at most two dimensions")
+          return
+        } 
+        
+        val cubicles = ListBuffer[RectTableau]()
+        if (Conf.mixed.f.isSupplied) {
+          val fileLines = Source.fromFile(Conf.mixed.f()).getLines.toList
+          fileLines.foldLeft(cubicles)((LB, str) => if (str.trim().isEmpty()) LB else LB += RectTableau(str))
+          if (cubicles.length > 0 && (cubicles(0).rows != dims(0) || cubicles(0).cols != dims(1))) {
+            println("polytope: mismatched cubicle shape")
+            println("the input file had cubicles of shape " + cubicles(0).rows + "x" + cubicles(0).cols + " but the command line dimensions were " + dims(0) + "x" + dims(1))
+            return
+          }
+        }
+        
+        /*
+        if (!Conf.computer.isSupplied && dims(0)*dims(1) >= 9) {
+          println("polytope: the polytope will have dimensions " + dims(0) + "x" + dims(1) + "x" + dims(0)*dims(1))
+          println("WARNING: THIS COMPUTATION COULD TAKE OVER 30 MINS ON A SINGLE CORE")
+          println("Are you sure you want to continue [Y/n]?")
+          var ans = readChar()
+          while (ans != 'Y' && ans != 'n') {
+            println("Please enter 'Y' for yes or 'n' for no")
+            ans = readChar()
+          }
+          if (ans == 'n') {
+            println("polytope: computation aborted at user request")
+            return
+          }
+        } 
+        *        
+        */       
+        
+        val ieqs = InequalityFactory.inequalities(dims(0), dims(1), cubicles)
+        
+        if (Conf.computer() > 0) {
+          ieqs.foreach(ieq => println("[" + (ieq.toArray() mkString ",") + "]"))
+        } else {
+          if (Conf.mixed.plaintext() > 0) {
+            // TODO: Print inequalities in plaintext instead of LaTeX
+            println(dims(0) + "x" + dims(1) + "x" + dims(0)*dims(1) + " Inequalities\n")
+            if (ieqs.size == 0) println("There are no inequalities.")
+            else ieqs.foreach(i => println(i.toLatex() + """\\"""))
+          } else {
+            println(dims(0) + "x" + dims(1) + "x" + dims(0)*dims(1) + " Inequalities\n")
+            if (ieqs.size == 0) println("There are no inequalities.")
+            else ieqs.foreach(i => println(i.toLatex() + """\\"""))          
+          }
+        
+          if (Conf.mixed.all() > 0) {
+            val poly = PolyhedralCone.momentPolyhedron(ieqs)
+            
+            // Print vertices
+            println("\n\nVertices of polytope (normalized to trace zero)\n")
+            if (ieqs.size == 0) 
+              println("The cone is the whole positive Weyl chamber.")
+            else     
+              poly.edges().foreach(e => println(e))
+              
+            // TODO: Print permutations and extremal edges which lead to
+            // inequalities
+          }
+        }
+      } 
+      
+      /**********************************************
+       * Calculate a pure polytope
+       */
+      case Some(Conf.pure) => {
+        val dims = if (Conf.mixed.dims().length == 1) 
+             List(Conf.mixed.dims()(0), 0)
+           else 
+             Conf.mixed.dims()
+
+        if (dims.length > 3) {
+          println("polytope: feature not implemented; pure accepts at most three dimensions")
+          return
+        } 
+        
+        val cubicles = ListBuffer[RectTableau]()
+        if (Conf.mixed.f.isSupplied) {
+          val fileLines = Source.fromFile(Conf.mixed.f()).getLines.toList
+          fileLines.foldLeft(cubicles)((LB, str) => if (str.trim().isEmpty()) LB else LB += RectTableau(str))
+          if (cubicles.length > 0 && (cubicles(0).rows != dims(0) || cubicles(0).cols != dims(1))) {
+            println("polytope: mismatched cubicle shape")
+            println("the input file had cubicles of shape " + cubicles(0).rows + "x" + cubicles(0).cols + " but the command line dimensions were " + dims(0) + "x" + dims(1))
+            return
+          }
+        }
+        
+        println("polytope: calculation of pure polytope is not implemented")
+      }
+      
+      /**********************************************
+       * Calculate all dimA by dimB cubicles
+       */
+      case Some(Conf.cubicles) => {
+        val (dimA, dimB) = (Conf.cubicles.dimA(), Conf.cubicles.dimB())
+        
+        // Confirm that user wants to do such a large calculation
+        if (!Conf.computer.isSupplied && dimA*dimB >= 18) {
+          println("polytope: the cubicles will have dimensions " + dimA + "x" + dimB)
+          println("WARNING: THIS COMPUTATION COULD TAKE OVER 10 MINS ON A SINGLE CORE")
+          println("Are you sure you want to continue [Y/n]?")
+          var ans = readChar()
+          while (ans != 'Y' && ans != 'n') {
+            println("Please enter 'Y' for yes or 'n' for no")
+            ans = readChar()
+          }
+          if (ans == 'n') {
+            println("polytope: computation aborted at user request")
+            return
+          }
+        }        
+        
+        val cs = RectTableau.standardTableaux(dimA, dimB).filter(_.isAdmissible)
+        if (Conf.computer.isSupplied) {
+          for (c <- cs)
+            println("[" + (c.toMatrix map(_ mkString ",") mkString ";") + "]")
+        } else {
+          if (dimA*dimB == 0) {
+            println("The only cubicle corresponds to the empty tableaux.")
+          } else {
+            println("The cubicles correspond to the following tableaux:\n")
+            for (c <- cs) {
+              println("-"*((2+dimA*dimB/10)*dimB-1))
+              println(c)
+            }
+            println("-"*((2+dimA*dimB/10)*dimB-1))
+          }
+        }
+      }
+      case None => Conf.builder.printHelp
+    }
+
   } catch {
     case e: java.lang.NumberFormatException => {
       println("polytope: the dimensions must be numbers")

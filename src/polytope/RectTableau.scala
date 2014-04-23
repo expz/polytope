@@ -3,6 +3,9 @@ package polytope
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConversions._
+
+import scala.util.parsing.combinator._
+
 /*
 import net.sf.javailp._
 import net.sf.javailp.SolverGLPK.Hook
@@ -94,6 +97,11 @@ class RectTableau(val rows: Int,
       }
     }
     P.intersection(new PolyhedralCone(Array[Array[Int]](), ieqs.result))
+  }
+  
+  override def toString(): String = {
+    if (rows*cols < 10) return toMatrix.map(_ mkString " ") mkString "\n"
+    else return toMatrix.map(_.map(i => if (i < 10) " " + i else i.toString) mkString " ") mkString "\n"
   }
   
   /*
@@ -226,6 +234,20 @@ object RectTableau {
             ArrayBuffer.tabulate[Int](t.length)(
                 n => t.indexWhere(_ == n+1) / tableau(0).length + 1)
           })
+  
+  def apply(str: String): RectTableau = apply(stringToMatrix(str))
+  
+  object matrixParser extends RegexParsers {
+    def entry: Parser[Int] = regex("""\d+""".r).map(s => s.toInt) 
+    def row: Parser[Array[Int]] = repsep(entry, ",").map(L => L.toArray)
+    def matrix: Parser[Array[Array[Int]]] = "[" ~> repsep(row, ";").map(L => L.toArray) <~ "]" 
+    def parse(str: String): ParseResult[Array[Array[Int]]] = parseAll(matrix, str)
+    def apply(str: String): Array[Array[Int]] = parse(str) match {
+      case Success(result: Array[Array[Int]], _) => result
+      case _ => throw new Exception("The string could not be parsed into a matrix. Input:\n" + str)
+    }
+  }
+  def stringToMatrix(str: String): Array[Array[Int]] = matrixParser(str)
   
   def standardTableaux(rows: Int, cols: Int): ListBuffer[RectTableau] = {
     /*

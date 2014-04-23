@@ -4,9 +4,10 @@ $JAVA \
 -Duser.dir=`pwd` \
 -Djava.library.path=lib/linux_x86 \
 -Dfile.encoding=UTF-8 \
--Xbootclasspath/p:lib/scala-library.jar:lib/scala-reflect.jar \
 -classpath \
 bin:\
+lib/scala-library.jar:\
+lib/scala-reflect.jar:\
 lib/polco.jar:\
 lib/scalatest_2.10-2.1.0.jar:\
 lib/junit-4.8.2.jar:\

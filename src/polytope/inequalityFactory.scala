@@ -2,12 +2,21 @@ package polytope
 
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
+import scala.collection.mutable.ListBuffer
 
 object InequalityFactory {
-    
-  def inequalities(dimA: Int, dimB: Int): HashSet[Inequality] = {
+  
+  // Accept list of precalculated cubicles
+  def inequalities(dimA: Int, 
+                   dimB: Int, 
+                   cubicles: ListBuffer[RectTableau] = ListBuffer[RectTableau]()
+                   ): HashSet[Inequality] = {
     val ieqs = HashSet[Inequality]()
-    for (T <- RectTableau.standardTableaux(dimA, dimB).filter(_.isAdmissible)) {
+    val Ts = if (cubicles.length == 0)
+               RectTableau.standardTableaux(dimA, dimB).filter(_.isAdmissible)
+             else
+               cubicles
+    for (T <- Ts) {
       val dimAB = dimA*dimB
       for (edge <- T.toCone.edges(dimA)) {
         for (u <- PermutationFactory.shuffles(edge.multA)) {
