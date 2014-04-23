@@ -1,3 +1,5 @@
+Runtime for calculating the set of shuffles corresponding to a vector fo multiplicities with a fixed sum
+
 size max-runtime-microsec
 0 10
 1 8
