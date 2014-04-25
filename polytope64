@@ -1,19 +1,131 @@
-JAVA="/usr/lib/jvm/java-7-openjdk-i386/bin/java"
+#!/bin/bash
+#
+# Run the polytope program
+#
 
-$JAVA \
--Duser.dir=`pwd` \
--Djava.library.path=lib/linux_amd64 \
+# Get the name of the directory containing this script
+DIR_POLYTOPE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Configure the java command
+if [[ "$HOST_NAME" == "brutus*" ]]; then
+
+  # Load Java 1.7 while suppressing output
+  module unload java         1>/dev/null
+  module load java/1.7       1>/dev/null
+
+  # Configure the Java command
+  POLYTOPE_JAVA="java -XX:+UseSerialGC"
+  
+else
+  
+  # Search for Java
+  if [ ! "$POLYTOPE_JAVA" ]; then
+  
+    if [ "which java" ]; then 
+    
+      POLYTOPE_JAVA="java"
+      
+    elif [ "$JAVA_HOME" ] && [[ -x "$JAVA_HOME/bin/java" ]]; then
+    
+      POLYTOPE_JAVA="$JAVA_HOME/bin/java"
+    
+    else
+    
+      echo "polytope: java not found. check the PATH or JAVA_HOME variable. exiting."
+      exit
+    
+    fi
+    
+  fi
+    
+fi
+
+# Check the version of Java is recent enough
+java_version=$("$POLYTOPE_JAVA" -version 2>&1 | awk -F '"' '/version/ {print $2}')
+
+if [[ "$java_version" < "1.7" ]]; then
+  
+  echo "polytope: java version $java_version found, but version >= 1.7 required. exiting."
+  exit
+  
+fi
+
+# Set the native libraries directory according to the machine architecture
+if [[ "$(uname -m)" == "*64" ]]; then
+
+  DIR_NATIVELIBS="lib/linux_amd64"
+
+else
+
+  DIR_NATIVELIBS="lib/linux_x86"
+
+fi
+
+
+# If the version of glibc is less than 2.14, then turn on the local glibc 2.15
+# Get all libc6 libraries
+LIBC_FILES=$(ldconfig -p | \
+             grep libc.so.6 | \
+             { \
+               while read line
+                 do [ ! "$line" ] && continue
+                 printf "${line##* } "
+               done
+             })
+
+# If at least one libc6 library was found
+if [ "${libc%%*( )}" != "" ]; then
+
+  # Check the version numbers which each library can emulate
+  for libc in "$LIBC_FILES"; do
+  
+    for vers in $(strings "$libc" | grep "GLIBC_" | sed -n 's/GLIBC_\([0-9]\.[0-9]\)/\1/p'); do
+      
+      # if the version is at least 2.14, then break
+      if [ $vers -ge 2.14 ]; then
+        
+        LIBC_2_14_FOUND="true"
+        break 2
+  
+      fi
+    
+    done
+        
+  done
+
+fi
+
+# If glibc < 2.14, turn on the local glibc 2.15 libraries while suppressing output
+if [ ! "$LIBC_2_14_FOUND" ]; then
+  
+  # The dot makes it run in the current shell so the variables stick around
+  . $DIR_POLYTOPE/$DIR_NATIVELIBS/glibc-2.15/turn on         1>/dev/null
+
+fi
+
+# Run the program, passing on all command line arguments
+"$POLYTOPE_JAVA" \
+-Duser.dir="$DIR_POLYTOPE" \
+-Djava.library.path="$DIR_NATIVELIBS" \
 -Dfile.encoding=UTF-8 \
--Xbootclasspath/p:lib/scala-library.jar:lib/scala-reflect.jar \
 -classpath \
 bin:\
+lib/scala-library.jar:\
+lib/scala-reflect.jar:\
 lib/polco.jar:\
 lib/scalatest_2.10-2.1.0.jar:\
 lib/junit-4.8.2.jar:\
-lib/linux_amd64/com.google.ortools.jar:\
+"$DIR_NATIVELIBS/com.google.ortools.jar":\
 lib/scallop_2.10-0.9.5.jar:\
 lib/jfreechart-1.0.17.jar:\
 lib/jcommon-1.0.21.jar:\
  \
 polytope.package \
 $@
+
+# If we turned on the local glibc 2.15, then turn it off
+if [ ! "$LIBC_2_14_FOUND" ]; then
+
+  . $DIR_POLYTOPE/$DIR_NATIVELIBS/glibc-2.15/turn off         1>/dev/null
+
+fi
