@@ -6,14 +6,9 @@ import scala.collection.JavaConversions._
 
 import scala.util.parsing.combinator._
 
-/*
-import net.sf.javailp._
-import net.sf.javailp.SolverGLPK.Hook
-import org.gnu.glpk._
-*/
-import com.google.ortools.linearsolver.MPConstraint;
-import com.google.ortools.linearsolver.MPSolver;
-import com.google.ortools.linearsolver.MPVariable;
+import com.google.ortools.linearsolver.MPConstraint
+import com.google.ortools.linearsolver.MPSolver
+import com.google.ortools.linearsolver.MPVariable
 
 class RectTableau(val rows: Int, 
                   val cols: Int, 
