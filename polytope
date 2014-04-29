@@ -1,21 +1,29 @@
 #!/bin/bash
 #
 # Run the polytope program
+# 
+# WARNING: If working on Brutus, this must be run using 'bsub' to work
+# WARNING: If working on Brutus, the modules must be loaded BEFORE this script
 #
 
 # Get the name of the directory containing this script
 DIR_POLYTOPE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Configure the java command
-if [[ "$HOST_NAME" == "brutus*" ]]; then
+# Change to the root polytope directory
+cd "$DIR_POLYTOPE"
 
-  # Load Java 1.7 while suppressing output
-  module unload java         1>/dev/null
-  module load java/1.7       1>/dev/null
+# Configure the java command
+if [[ "$HOSTNAME" == brutus* ]]; then
+
+  # This doesn't seem to work. Do it manually before calling script.
+  # Load Java 1.7 and libstdc++ library while suppressing output
+  module unload java        1>/dev/null
+  module load java/1.7      1>/dev/null
+  module load gcc/4.7       1>/dev/null
 
   # Configure the Java command
   POLYTOPE_JAVA="java -XX:+UseSerialGC"
-  
+
 else
   
   # Search for Java
@@ -37,21 +45,23 @@ else
     fi
     
   fi
+
+  # Check the version of Java is at least 1.7
+  java_version=$("$POLYTOPE_JAVA" -version 2>&1 | \
+               awk -F '"' '/version/ {print $2}')
+  
+  if [[ "$java_version" < "1.7" ]]; then
     
+    echo "polytope: java version $java_version found, but version >= 1.7 required. exiting."
+    exit
+  
+  fi
+
 fi
 
-# Check the version of Java is recent enough
-java_version=$("$POLYTOPE_JAVA" -version 2>&1 | awk -F '"' '/version/ {print $2}')
-
-if [[ "$java_version" < "1.7" ]]; then
-  
-  echo "polytope: java version $java_version found, but version >= 1.7 required. exiting."
-  exit
-  
-fi
 
 # Set the native libraries directory according to the machine architecture
-if [[ "$(uname -m)" == "*64" ]]; then
+if [[ "$(uname -m)" == *64 ]]; then
 
   DIR_NATIVELIBS="lib/linux_amd64"
 
@@ -99,7 +109,7 @@ fi
 if [ ! "$LIBC_2_14_FOUND" ]; then
   
   # The dot makes it run in the current shell so the variables stick around
-  . $DIR_POLYTOPE/$DIR_NATIVELIBS/glibc-2.15/turn on         1>/dev/null
+  . $DIR_POLYTOPE/$DIR_NATIVELIBS/glibc-2.15/turn on       1>/dev/null
 
 fi
 
@@ -121,11 +131,11 @@ lib/jfreechart-1.0.17.jar:\
 lib/jcommon-1.0.21.jar:\
  \
 polytope.package \
-$@
+$@ 1> "polytope$(date +"%H%M%N").txt"
 
 # If we turned on the local glibc 2.15, then turn it off
 if [ ! "$LIBC_2_14_FOUND" ]; then
 
-  . $DIR_POLYTOPE/$DIR_NATIVELIBS/glibc-2.15/turn off         1>/dev/null
+  . $DIR_POLYTOPE/$DIR_NATIVELIBS/glibc-2.15/turn off      1>/dev/null
 
 fi
