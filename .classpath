@@ -11,6 +11,10 @@
 	<classpathentry kind="lib" path="lib/scallop_2.10-0.9.5.jar"/>
 	<classpathentry kind="lib" path="lib/scala-library.jar"/>
 	<classpathentry kind="lib" path="lib/scala-reflect.jar"/>
-	<classpathentry kind="lib" path="lib/linux_x86/com.google.ortools.jar"/>
+	<classpathentry kind="lib" path="lib/linux_x86/com.google.ortools.jar">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="polytope/lib/linux_x86"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
