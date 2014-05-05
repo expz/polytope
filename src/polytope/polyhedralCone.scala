@@ -6,44 +6,33 @@ import scala.collection.mutable.HashSet
 
 import scala.util.Sorting
 
-import ch.javasoft.polco.adapter._
+import parma_polyhedra_library._
 
 /*
  * PolyhedralCone
  * 
+ * ieqs are >= 0
+ * 
  * WARNING: the lengths of the arrays in eqs and ieqs must be equal, but there
  *  is no check. Otherwise, an error can be thrown when calling edges(). 
  */
-class PolyhedralCone(_eqs: Array[Array[Int]], val _ieqs: Array[Array[Int]]) {
+class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {  
   // Check that eqs and ineqs all have the same number of coefficients
-  assert((_eqs ++ _ieqs).map(_.length).distinct.length <= 1)
+  assert((eqs ++ ieqs).map(_.length).distinct.length <= 1)
   
-  // The Polco library has a bug: the first equality cannot be all zeros
-  // The Polco library sometimes gives errors for passing empty arrays
-  private var i = 0
-  while (i < _eqs.length && _eqs(i).length != 0 && _eqs(i).find(_ != 0) == None)
-    i += 1
-  val eqs = if (_eqs.length > i) {
-    _eqs.drop(i)
-  } else if (_ieqs.length > 0) {
-    Array(Array.fill[Int](_ieqs(0).length)(0))
-  } else {
-    Array(Array(0))
+  val dim: Int = if (eqs.length > 0) eqs(0).length
+            else if (ieqs.length > 0) ieqs(0).length
+            else 0
+  
+  try {
+    System.loadLibrary("ppl_java")
+  } catch {
+    case e: UnsatisfiedLinkError => {
+      System.err.println("Native code library (libppl_java.so) failed to load.\n" + e)
+      System.exit(1)
+    }
   }
-  
-  // The Polco library sometimes gives errors for passing empty arrays
-  val ieqs = if (_ieqs.length > 0) {
-    _ieqs
-  } else if (eqs.length > 0) {
-    Array(Array.fill[Int](eqs(0).length)(0))
-  } else {
-    Array(Array(0))
-  }
-  
-  private final val PAOpt = new Options()
-  PAOpt.setLoglevel(java.util.logging.Level.OFF)
-  private final val PA = new PolcoAdapter(PAOpt)
-  
+
   def intersection(P2: PolyhedralCone): PolyhedralCone = {
     val eqsToAdd = 
       if (eqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else eqs
@@ -57,16 +46,77 @@ class PolyhedralCone(_eqs: Array[Array[Int]], val _ieqs: Array[Array[Int]]) {
     return new PolyhedralCone(eqsToAdd ++ P2eqsToAdd, ieqsToAdd ++ P2ieqsToAdd)
   }
   
-  def edges(): Array[Edge] = PA.getBigIntegerRays(eqs, ieqs).map(
-      arr => new Edge(arr.map(_.intValue()))) 
+  /*
+   *  Calculates the edges anew every time it is called
+   */
+  def edges(): ArrayBuffer[Edge] = {
+    // The library must be initialized and later finalized
+    Parma_Polyhedra_Library.initialize_library()
+    
+    val cs = new Constraint_System()
+    val vars = for (i <- 0 until dim) 
+                 yield new Linear_Expression_Variable(new Variable(i))
+    
+    val zero = new Linear_Expression_Coefficient(new Coefficient(0))
+    
+    // Convert an array of coefficients into a PPL Linear_Expression
+    def toLinear_Expression(coeffs: Array[Int]): Linear_Expression =
+      coeffs.foldLeft[(Linear_Expression, Int)]((zero, 0))(
+        (keyVal, c) => (new Linear_Expression_Sum(keyVal._1, 
+                          new Linear_Expression_Times(
+                            new Coefficient(c), 
+                            vars(keyVal._2))), 
+                         keyVal._2 + 1)
+       )._1
+    
+    // Convert equations to constraints and add them to cs
+    eqs.map(toLinear_Expression(_)).
+        map(new Constraint(_, parma_polyhedra_library.Relation_Symbol.EQUAL, zero)).
+        foreach(cs.add(_))
+    
+    // Convert inequalities to constraints and add them to cs
+    ieqs.map(toLinear_Expression(_)).
+        map(new Constraint(_, parma_polyhedra_library.Relation_Symbol.GREATER_OR_EQUAL, zero)).
+        foreach(cs.add(_))
+    
+    val myPoly = new C_Polyhedron(cs)
+    val gs = myPoly.generators()
+    //
+    /*
+      SAMPLE ascii_dump() OUTPUT:
+      
+      3 x 2 SPARSE (not_sorted)
+      index_first_pending 3
+      size 3 1 2 0 P (C)
+      size 3 1 0 2 R (C)
+      ...
+     */
+    // The only way to get at the data seems to be to dump it to a string
+    val asciiDump = gs.ascii_dump().lines.drop(3).toArray
+    val strRays = asciiDump.filter(_.indexOf('R')>=0)
+    val rays = strRays.map(
+                 _ drop(5) dropRight(6) split(' ') drop(2) map(_.toInt)
+               )
+    val strLines = asciiDump.filter(_.indexOf('L')>=0)
+    val lines = strLines.map(
+                  _ drop(5) dropRight(6) split(' ') drop(2) map(_.toInt)
+                )
+    val allRays = lines ++ (lines.map(_.map(-_))) ++ rays
+    
+    // Convert rays (Array[Int]) to edges and save
+    val es = allRays.map(new Edge(_))
+    
+    // Now we can free the Polyhedron and finalize the library
+    myPoly.free()
+    Parma_Polyhedra_Library.finalize_library()
+    
+    // But we saved the edges so return them
+    return es.to[ArrayBuffer]
+  } 
   
-  def edges(dimA: Int): ArrayBuffer[ABEdge] = {
-    val es = ArrayBuffer[ABEdge]()
-    for (r <- PA.getBigIntegerRays(eqs, ieqs)) {
-      es += new ABEdge(r.map(_.intValue()), dimA)
-    }
-    return es
-  }
+  // Calculate ABEdges
+  def edges(dimA: Int): ArrayBuffer[ABEdge] = 
+    edges().map(e => new ABEdge(e.edge, dimA))
   
   override def toString: String =
     "PolyhedralCone\nEqualities\n" + 
@@ -84,7 +134,8 @@ object PolyhedralCone {
    *                        numChamberVars starting at firstChamberVar in a
    *                        total space of numTotalVars
    *                        
-   *                        The cone where consecutive variables decrease
+   *                        The cone where consecutive variables decrease and
+   *                        sum to zero
    * 
    * @param numTotalVars                       
    * @param firstChamberVar starts counting at 0

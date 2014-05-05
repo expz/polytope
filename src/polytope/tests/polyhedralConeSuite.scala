@@ -19,20 +19,32 @@ class polyhedralConeSuite extends UnitSpec {
   "PolyhedralCone" should "calculate edges of a trivial cone." in {
     val pc1 = PolyhedralCone(Array(), Array())    
     val pc2 = PolyhedralCone(Array(Array[Int]()), Array(Array[Int]()))
-    
-    pc1.edges().map(_.edge).deep should be (Array[Array[Int]]().deep)
-    pc2.edges().map(_.edge).deep should be (Array[Array[Int]]().deep)  
+
+    pc1.edges() should be (ArrayBuffer()) //.map(_.edge).toArray[Array[Int]].deep should be (Array[Array[Int]]().deep)
+    pc2.edges() should be (ArrayBuffer()) //.map(_.edge).toArray[Array[Int]].deep should be (Array[Array[Int]]().deep)  
   }
 
-  it should "calculate edges of a degenerate cone." in {
+  it should "calculate edges of a half-space cone." in {
     val pc1 = PolyhedralCone(Array(), Array(Array(1, -1)))
     val pc2 = PolyhedralCone(Array(Array(0, 0), Array(0, 0)), Array(Array(1, -1)))
     
-    pc1.edges().map(_.edge.toVector).toSet.contains(Vector(1, -1)) should 
-        be (true)
-    pc1.edges().map(_.edge.toVector).toSet.contains(Vector(-1, 1)) should 
-        be (true)
-    pc2.edges().map(_.edge).deep should be (Array(Array(1, -1)).deep)
+    val es1 = pc1.edges().map(_.edge.toVector).toSet
+    val es2 = pc2.edges().map(_.edge.toVector).toSet
+    
+    es1 should contain allOf (Vector(1, 1), Vector(-1, -1))
+    es1.size should be > 2
+    all (es1.map(v => v(0) - v(1))) should be >= 0
+    
+    es2 should contain allOf (Vector(1, 1), Vector(-1, -1))
+    es2.size should be > 2
+    all (es2.map(v => v(0) - v(1))) should be >= 0
+  }
+  
+  it should "calculate edges of a cone with lower dim than ambient space." in {
+    val pc = PolyhedralCone(Array(Array(1, -1)), Array(Array(1, -1)))
+    val es = pc.edges().map(_.edge.toVector).toSet
+    
+    es should be (Set(Vector(1, 1), Vector(-1, -1)))
   }
   
   it should "calculate edges of a non-trivial cone." in {
@@ -50,7 +62,12 @@ class polyhedralConeSuite extends UnitSpec {
     
   it should "make a trivial Weyl chamber." in {
     val wc1 = PolyhedralCone.positiveWeylChamber(1, 0, 1)
-    wc1.edges().map(_.edge).deep should be (Array(Array(1)).deep) 
+    val wc2 = PolyhedralCone.positiveWeylChamber(3, 0, 1)
+    
+    // Trace zero assumption!
+    wc1.edges().map(_.edge).toArray.deep should be (Array().deep)
+    
+    wc2.edges().map(_.edge.toVector).toSet should contain allOf(Vector(0,1,0),Vector(0,-1,0),Vector(0,0,1),Vector(0,0,-1))
   }
   
   it should "correctly make a non-trivial Weyl chamber." in {

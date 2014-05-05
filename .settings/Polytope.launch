@@ -10,7 +10,7 @@
 <listEntry value="org.eclipse.debug.ui.launchGroup.run"/>
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="polytope.package"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="mixed 2 3"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="mixed 3 3"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="polytope"/>
-<stringAttribute key="yk-options" value="&#10;alloc-size-limit-enabled=true&#10;alloc-record-each=100&#10;alloc-size-limit=1048576&#10;alloc-sampled=false&#10;alloc-record-each-enabled=true&#10;additional-options2=onexit\=snapshot&#10;startup=6&#10;"/>
+<stringAttribute key="yk-options" value="&#10;alloc-size-limit-enabled=true&#10;alloc-record-each=10&#10;alloc-size-limit=108576&#10;alloc-sampled=false&#10;alloc-record-each-enabled=true&#10;additional-options2=onexit\=snapshot&#10;startup=6&#10;"/>
 </launchConfiguration>
