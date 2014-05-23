@@ -10,6 +10,7 @@ val versionString = "polytope %d.%02d".format(bigVersion, littleVersion)
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
@@ -30,9 +31,8 @@ type Polynomial = ArrayBuffer[Long]
 type Permutation = Array[Int]
 
 
-
 def main(args: Array[String]) {
-  
+  assert(true == false)
   val versionOutput = versionString + "\n" +
     "Copyright (C) 2014 ETH Zürich\n" +
     "License Simplified BSD Style <http://intra.csb.ethz.ch/tools/LICENSE.txt>\n" +
@@ -43,19 +43,30 @@ def main(args: Array[String]) {
     "Written by Jonathan Skowera."
   try {
     object Conf extends ScallopConf(args.toList) {
-      banner("""Usage: polytope [OPTIONS] DIM_A DIM_B
-               |Calculate and print the vertices of the entanglement polytope for mixed states
-               |of two distinguishable particles with DIM_A and DIM_B degrees of freedom
-               |""".stripMargin)
+      banner(
+"""Usage: polytope [OPTIONS] (pure|mixed) [CMD-OPTIONS] DIM_A DIM_B
+  |Calculate and print data for entanglement polytopes for two distinguishable
+  |particles with DIM_A and DIM_B degrees of freedom
+  |""".stripMargin)
   
       val mixed = new Subcommand("mixed") {
         val dims = trailArg[List[Int]](name="dims", required=true, hidden=true, 
                         validate=(L => L.map(_ > 0).reduce(_ && _)))
-        val f = opt[String]("cubiclefile",
-                             short='f',
-                             descr="Only calculate inequalities associated to a particular cubicle (Useful for splitting up calculation into parts)")
+        val f = opt[String]("cubiclefile", 
+            short='f',
+            descr="Only calculate inequalities associated to a particular " +
+                  "cubicle (Useful for splitting up calculation into parts)")
+        val cubicles = 
+          tally("cubicles", short='u', descr="Print cubicles")
+        val edges = 
+          tally("edges", short='e', descr="Print integral extremal edges")
+        val coeffs = 
+          tally("coeffs", short='c', descr="Print nonzero coefficients")
+        val ineqs = tally("ineqs", short='i', descr="Print inequalities")
+        val vertices = tally("vertices", short='v', descr="Print vertices")
+ 
         val all = tally("all", 
-                        descr="Output all calculated polytope features (TODO)")
+                        descr="Output all calculated polytope features")
         val plaintext = tally("plaintext", descr = 
           "Print equations in plain text (Default is LaTeX) (TODO)")
       }
@@ -69,19 +80,19 @@ def main(args: Array[String]) {
         val dimD = trailArg[Int](name="dimD", required=false, hidden=true)
         * 
         */
+        val f = opt[String]("cubiclefile",
+                             short='f',
+                             descr="Only calculate inequalities associated to a particular cubicle (Useful for splitting up calculation into parts)")
+        val cubicles = tally("cubicles", short='u', descr="Print cubicles (TODO)")
+        val edges = tally("edges", short='e', descr="Print integral extremal edges (TODO)")
+        val coeffs = tally("coeffs", short='c', descr="Print nonzero coefficients (TODO)")
+        val ineqs = tally("ineqs", short='i', descr="Print inequalities (TODO)")
+        val vertices = tally("vertices", short='v', descr="Print vertices (TODO)")
+
         val all = tally("all", 
                         descr="Output all calculated polytope features (TODO)")
         val plaintext = tally("plaintext", descr = 
           "Print equations in plain text (Default is LaTeX) (TODO)")
-      }
-      val cubicles = new Subcommand("cubicles") {
-        val dimA = trailArg[Int](name="dimA", required=true, hidden=true,
-                                 validate=(_>=0))
-        val dimB = trailArg[Int](name="dimB", required=true, hidden=true,
-                                 validate=(_>=0))
-        // Includes permutations and edges corresponding to inequalities
-        // Includes vertices of polytope
-        // Includes inequalities of polytope
       }
       val help = tally("help", noshort=true, descr="Display this help and exit")
       val computer = tally("computer", descr =
@@ -110,149 +121,219 @@ def main(args: Array[String]) {
                           { case None => false; case _ => true }
     
     Conf.subcommand match {
-      /**************************************
-       * Calculate a mixed polytope
-       */
-      case Some(Conf.mixed) => {
-        val dims = if (Conf.mixed.dims().length == 1) 
-                     List(Conf.mixed.dims()(0), 0) 
-                   else 
-                     Conf.mixed.dims()
+    /**************************************
+     * Calculate a mixed polytope
+     */
+    case Some(Conf.mixed) => {
+      val dims = if (Conf.mixed.dims().length == 1) 
+                   List(Conf.mixed.dims()(0), 0) 
+                 else 
+                   Conf.mixed.dims()
 
-        if (dims.length > 2) {
-          println("polytope: feature not implemented; mixed accepts at most two dimensions")
-          return
-        } 
-        
-        val cubicles = ListBuffer[RectTableau]()
-        if (Conf.mixed.f.isSupplied) {
-          val fileLines = Source.fromFile(Conf.mixed.f()).getLines.toList
-          fileLines.foldLeft(cubicles)((LB, str) => if (str.trim().isEmpty()) LB else LB += RectTableau(str))
-          if (cubicles.length > 0 && (cubicles(0).rows != dims(0) || cubicles(0).cols != dims(1))) {
-            println("polytope: mismatched cubicle shape")
-            println("the input file had cubicles of shape " + cubicles(0).rows + "x" + cubicles(0).cols + " but the command line dimensions were " + dims(0) + "x" + dims(1))
-            return
-          }
-        }
-        
-        /*
-        if (!Conf.computer.isSupplied && dims(0)*dims(1) >= 9) {
-          println("polytope: the polytope will have dimensions " + dims(0) + "x" + dims(1) + "x" + dims(0)*dims(1))
-          println("WARNING: THIS COMPUTATION COULD TAKE OVER 30 MINS ON A SINGLE CORE")
-          println("Are you sure you want to continue [Y/n]?")
-          var ans = readChar()
-          while (ans != 'Y' && ans != 'n') {
-            println("Please enter 'Y' for yes or 'n' for no")
-            ans = readChar()
-          }
-          if (ans == 'n') {
-            println("polytope: computation aborted at user request")
-            return
-          }
-        } 
-        *        
-        */       
-        
-        val ieqs = InequalityFactory.inequalities(dims(0), dims(1), cubicles)
-        
-        if (Conf.computer() > 0) {
-          ieqs.foreach(ieq => println("[" + (ieq.toArray() mkString ",") + "]"))
-        } else {
-          if (Conf.mixed.plaintext() > 0) {
-            // TODO: Print inequalities in plaintext instead of LaTeX
-            println(dims(0) + "x" + dims(1) + "x" + dims(0)*dims(1) + " Inequalities\n")
-            if (ieqs.size == 0) println("There are no inequalities.")
-            else ieqs.foreach(i => println(i.toLatex() + """\\"""))
-          } else {
-            println(dims(0) + "x" + dims(1) + "x" + dims(0)*dims(1) + " Inequalities\n")
-            if (ieqs.size == 0) println("There are no inequalities.")
-            else ieqs.foreach(i => println(i.toLatex() + """\\"""))          
-          }
-        
-          if (Conf.mixed.all() > 0) {
-            val poly = PolyhedralCone.momentPolyhedron(ieqs)
-            
-            // Print vertices
-            println("\n\nVertices of polytope (normalized to trace zero)\n")
-            if (ieqs.size == 0) 
-              println("The cone is the whole positive Weyl chamber.")
-            else     
-              poly.edges().foreach(e => println(e))
-              
-            // TODO: Print permutations and extremal edges which lead to
-            // inequalities
-          }
-        }
+      if (dims.length > 2) {
+        println("polytope: feature not implemented; " +
+                "mixed accepts at most two dimensions")
+        return
       } 
       
-      /**********************************************
-       * Calculate a pure polytope
-       */
-      case Some(Conf.pure) => {
-        val dims = if (Conf.mixed.dims().length == 1) 
-             List(Conf.mixed.dims()(0), 0)
-           else 
-             Conf.mixed.dims()
-
-        if (dims.length > 3) {
-          println("polytope: feature not implemented; pure accepts at most three dimensions")
+      // Prepare list of cubicles
+      val cubicles = ListBuffer[RectTableau]()
+      // If the cubicles are supplied in a file, then read the file
+      if (Conf.mixed.f.isSupplied) {
+        val fileLines = Source.fromFile(Conf.mixed.f()).getLines.toList
+        // Read data into cubicles ListBuffer
+        fileLines.foldLeft(cubicles)((LB, str) => 
+          if (str.trim().isEmpty()) LB 
+          else LB += RectTableau(str)
+        )
+        // Check that the cubicle dimensions are correct
+        if (cubicles.length > 0 && 
+            (cubicles(0).rows != dims(0) || cubicles(0).cols != dims(1))) {
+          println("polytope: mismatched cubicle shape")
+          println("the input file had cubicles of shape " + 
+                  cubicles(0).rows + "x" + cubicles(0).cols + 
+                  " but the command line dimensions were " + 
+                  dims(0) + "x" + dims(1))
           return
-        } 
-        
-        val cubicles = ListBuffer[RectTableau]()
-        if (Conf.mixed.f.isSupplied) {
-          val fileLines = Source.fromFile(Conf.mixed.f()).getLines.toList
-          fileLines.foldLeft(cubicles)((LB, str) => if (str.trim().isEmpty()) LB else LB += RectTableau(str))
-          if (cubicles.length > 0 && (cubicles(0).rows != dims(0) || cubicles(0).cols != dims(1))) {
-            println("polytope: mismatched cubicle shape")
-            println("the input file had cubicles of shape " + cubicles(0).rows + "x" + cubicles(0).cols + " but the command line dimensions were " + dims(0) + "x" + dims(1))
-            return
-          }
         }
-        
-        println("polytope: calculation of pure polytope is not implemented")
+      // Otherwise calculate the cubicles anew
+      } else {
+        cubicles ++= InequalityFactory.cubicles(dims)
       }
       
-      /**********************************************
-       * Calculate all dimA by dimB cubicles
-       */
-      case Some(Conf.cubicles) => {
-        val (dimA, dimB) = (Conf.cubicles.dimA(), Conf.cubicles.dimB())
-        
-        // Confirm that user wants to do such a large calculation
-        if (!Conf.computer.isSupplied && dimA*dimB >= 18) {
-          println("polytope: the cubicles will have dimensions " + dimA + "x" + dimB)
-          println("WARNING: THIS COMPUTATION COULD TAKE OVER 10 MINS ON A SINGLE CORE")
-          println("Are you sure you want to continue [Y/n]?")
-          var ans = readChar()
-          while (ans != 'Y' && ans != 'n') {
-            println("Please enter 'Y' for yes or 'n' for no")
-            ans = readChar()
-          }
-          if (ans == 'n') {
-            println("polytope: computation aborted at user request")
-            return
-          }
-        }        
-        
-        val cs = RectTableau.standardTableaux(dimA, dimB).filter(_.isAdmissible)
+      // If we should print the cubicles
+      if (Conf.mixed.cubicles() > 0 || Conf.mixed.all() > 0) {
+        // If it should be in computer readable form
         if (Conf.computer.isSupplied) {
-          for (c <- cs)
-            println("[" + (c.toMatrix map(_ mkString ",") mkString ";") + "]")
+          println("cubicles:")
+          if (!cubicles.isEmpty) {
+            println(cubicles(0).csvHeaders)
+            cubicles.foreach(c => println(c.toCSV))
+          }
+        // Otherwise in verbose form
         } else {
-          if (dimA*dimB == 0) {
+          if (dims(0)*dims(1) == 0) {
             println("The only cubicle corresponds to the empty tableaux.")
           } else {
             println("The cubicles correspond to the following tableaux:\n")
-            for (c <- cs) {
-              println("-"*((2+dimA*dimB/10)*dimB-1))
+            for (c <- cubicles) {
+              println("-"*((2+dims(0)*dims(1)/10)*dims(1)-1))
               println(c)
             }
-            println("-"*((2+dimA*dimB/10)*dimB-1))
+            println("-"*((2+dims(0)*dims(1)/10)*dims(1)-1))
+          }
+          println()
+        }
+      }
+      
+      val edges = 
+        // If we should print extremal edges
+        // Only prints edges (not cubicles which they correspond to)
+        if (Conf.mixed.edges() > 0 || Conf.mixed.all() > 0) {
+          val _edges = InequalityFactory.edges(cubicles)
+          if (Conf.computer.isSupplied) {
+            println("edges:")
+            println(_edges.keys.head.csvHeaders)
+            for (e <- _edges) println(e._1.toCSV)
+          } else {
+            println("The above cubicles correspond to the following edges:\n")
+            for (e <- _edges) println(e._1.toString)
+            println()
+          }
+          _edges
+        } else {
+          HashMap[ABEdge, ArrayBuffer[RectTableau]]()
+        }
+      
+      // Calculate all nonzero coefficients. Much more than needed for ineqs.
+      val coeffs =
+        if (Conf.mixed.coeffs() > 0 || Conf.mixed.all() > 0) {
+          if (Conf.mixed.edges() > 0 || Conf.mixed.all() > 0) {
+            InequalityFactory.coeffs(edges)
+          } else {
+            InequalityFactory.coeffs(cubicles)
+          }
+        } else {
+          ArrayBuffer[PFCoefficient]()
+        }
+      
+      // If we calculated coefficients, then print them
+      if (Conf.mixed.coeffs() > 0 || Conf.mixed.all() > 0) {
+        if (Conf.computer() > 0) {
+          println("nonzero-coefficients:")
+          if (!coeffs.isEmpty) {
+            println(coeffs(0).csvHeaders)
+            coeffs.foreach(c => println(c.toCSV))
+          }
+        } else {
+          println("Nonzero product flag coefficients:\n")
+          coeffs.foreach(c => println(c.toString))
+          println()
+        }
+      }
+      
+      // Calculate the inequalities if necessary
+      val ineqs =
+        if (Conf.mixed.ineqs() > 0 || 
+            Conf.mixed.vertices() > 0 || 
+            Conf.mixed.all() > 0) {
+          // Calculate the inequalities given what we have already computed
+          if (Conf.mixed.coeffs() > 0 || Conf.mixed.all() > 0) 
+            InequalityFactory.ineqs(coeffs)
+          else if (Conf.mixed.edges() > 0)
+            InequalityFactory.ineqs(edges)
+          else
+            InequalityFactory.ineqs(cubicles)
+        } else {
+          HashSet[Inequality]()
+        }
+
+      // If we should print the inequalities
+      if (Conf.mixed.ineqs() > 0 || Conf.mixed.all() > 0) {   
+        // If we should print in computer format
+        if (Conf.computer() > 0) {
+          println("inequalities:")
+          if (!ineqs.isEmpty) {
+            println(ineqs.head.csvHeaders)
+            ineqs.foreach(
+                    ineq => println(ineq.toCSV))
+          }
+        // Else print in readable format
+        } else {
+          if (Conf.mixed.plaintext() > 0) {
+            // TODO: Print inequalities in plaintext instead of LaTeX
+            println(dims(0) + "x" + dims(1) + "x" + dims(0)*dims(1) + 
+                    " Inequalities\n")
+            if (ineqs.size == 0) println("There are no inequalities.")
+            else ineqs.foreach(i => println(i.toLatex() + """\\"""))
+          } else {
+            println(dims(0) + "x" + dims(1) + "x" + dims(0)*dims(1) + 
+                    " Inequalities\n")
+            if (ineqs.size == 0) println("There are no inequalities.")
+            else ineqs.foreach(i => println(i.toLatex() + """\\"""))          
           }
         }
       }
-      case None => Conf.builder.printHelp
+      
+      // If we should calculate vertices
+      if (Conf.mixed.vertices() > 0 || Conf.mixed.all() > 0) {
+        val poly = PolyhedralCone.momentPolyhedron(ineqs)
+        
+        // Print vertices
+        if (Conf.computer() > 0) {
+          println("vertices:")
+          if (!ineqs.isEmpty) {
+            // CSV Header for vertices
+            println(
+              (1 to dims(0)).map("lambdaA" + _).mkString(",") + "," +
+              (1 to dims(1)).map("lambdaB" + _).mkString(",") + "," +
+              (1 to dims(0)*dims(1)).map("lambdaAB" + _).mkString(",")
+            )
+            poly.edges().foreach(e => println(e.toCSV))
+          }
+        } else {
+          println("\n\nVertices of polytope (normalized to trace zero)\n")
+          if (ineqs.size == 0)
+            println("The polytope is the whole positive Weyl chamber.")
+          else     
+            poly.edges().foreach(e => println(e))
+        }
+      }
+    }
+    
+    /**********************************************
+     * Calculate a pure polytope
+     */
+    case Some(Conf.pure) => {
+      val dims = if (Conf.mixed.dims().length == 1) 
+           List(Conf.mixed.dims()(0), 0)
+         else 
+           Conf.mixed.dims()
+
+      if (dims.length > 3) {
+        println("polytope: feature not implemented; pure accepts at most three dimensions")
+        return
+      } 
+      
+      val cubicles = ListBuffer[RectTableau]()
+      if (Conf.mixed.f.isSupplied) {
+        val fileLines = Source.fromFile(Conf.mixed.f()).getLines.toList
+        fileLines.foldLeft(cubicles)((LB, str) => if (str.trim().isEmpty()) LB else LB += RectTableau(str))
+        if (cubicles.length > 0 && (cubicles(0).rows != dims(0) || cubicles(0).cols != dims(1))) {
+          println("polytope: mismatched cubicle shape")
+          println("the input file had cubicles of shape " + cubicles(0).rows + "x" + cubicles(0).cols + " but the command line dimensions were " + dims(0) + "x" + dims(1))
+          return
+        }
+      }
+      
+      println("polytope: calculation of pure polytope is not implemented")
+    }
+    
+    /**********************************
+     * Catch all
+     */
+    case _ => Conf.builder.printHelp
+    
     }
 
   } catch {

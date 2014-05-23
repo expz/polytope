@@ -46,7 +46,7 @@ class inequalityFactorySuite extends UnitSpec {
   }
   
   it should "calculate 2x2x4 inequalities." in {
-    val ieqs = InequalityFactory.inequalities(2, 2)
+    val ieqs = InequalityFactory.ineqs(List(2, 2))
     val poly = PolyhedralCone.momentPolyhedron(ieqs)
     
     val bravyiPoly = PolyhedralCone(Array[Array[Int]](), Array(

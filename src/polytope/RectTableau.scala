@@ -94,10 +94,20 @@ class RectTableau(val rows: Int,
     P.intersection(new PolyhedralCone(Array[Array[Int]](), ieqs.result))
   }
   
-  override def toString(): String = {
-    if (rows*cols < 10) return toMatrix.map(_ mkString " ") mkString "\n"
-    else return toMatrix.map(_.map(i => if (i < 10) " " + i else i.toString) mkString " ") mkString "\n"
-  }
+  def csvHeaders(): String =     
+    (1 to rows) map(i => 
+      (1 to cols) map("T(" + i + "," + _ + ")") mkString(",")
+      ) mkString(",")
+
+  def toCSV(): String = toMatrix map(_ mkString(",")) mkString(",")
+    
+  override def toString(): String =
+    if (rows*cols < 10) 
+      toMatrix.map(_ mkString " ") mkString "\n"
+    else 
+      toMatrix.map(
+              _.map(i => if (i < 10) " " + i else i.toString) mkString " " 
+              ) mkString "\n"
   
   /*
    * isTrivial -- True if the tableau is labeled row-by-row sequentially 
@@ -136,11 +146,12 @@ class RectTableau(val rows: Int,
     return true
   }
   
-  /*
-   * isAdmissible -- Returns true if the RectTableau corresponds to a cubicle.
-   *                 This happens if its corresponding system of equations has
-   *                 a one-dimensional family of solutions. 
-   */
+  /** Returns true if the RectTableau corresponds to a cubicle. This happens if
+    * its corresponding system of equations has a one-dimensional family of 
+    * solutions.
+    * 
+    * @return whether the tableau corresponds to a cubicle 
+    */
   def isAdmissible: Boolean = {
     // FIXME!
     if (rows == 0 || cols == 0) return true
