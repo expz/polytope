@@ -28,11 +28,12 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
     System.loadLibrary("ppl_java")
   } catch {
     case e: UnsatisfiedLinkError => {
-      System.err.println("Native code library (libppl_java.so) failed to load.\n" + e)
+      System.err.println(
+        "Native code library (libppl_java.so) failed to load.\n" + e)
       System.exit(1)
     }
   }
-
+  
   def intersection(P2: PolyhedralCone): PolyhedralCone = {
     val eqsToAdd = 
       if (eqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else eqs
@@ -54,29 +55,32 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
     Parma_Polyhedra_Library.initialize_library()
     
     val cs = new Constraint_System()
-    val vars = for (i <- 0 until dim) 
-                 yield new Linear_Expression_Variable(new Variable(i))
+    val vars = for (i <- 0 until dim) yield 
+      new Linear_Expression_Variable(new parma_polyhedra_library.Variable(i))
     
-    val zero = new Linear_Expression_Coefficient(new Coefficient(0))
+    val zero = new Linear_Expression_Coefficient(
+                 new parma_polyhedra_library.Coefficient(0))
     
     // Convert an array of coefficients into a PPL Linear_Expression
     def toLinear_Expression(coeffs: Array[Int]): Linear_Expression =
       coeffs.foldLeft[(Linear_Expression, Int)]((zero, 0))(
         (keyVal, c) => (new Linear_Expression_Sum(keyVal._1, 
                           new Linear_Expression_Times(
-                            new Coefficient(c), 
+                            new parma_polyhedra_library.Coefficient(c), 
                             vars(keyVal._2))), 
                          keyVal._2 + 1)
        )._1
     
     // Convert equations to constraints and add them to cs
     eqs.map(toLinear_Expression(_)).
-        map(new Constraint(_, parma_polyhedra_library.Relation_Symbol.EQUAL, zero)).
+        map(new Constraint(
+          _, parma_polyhedra_library.Relation_Symbol.EQUAL, zero)).
         foreach(cs.add(_))
     
     // Convert inequalities to constraints and add them to cs
     ieqs.map(toLinear_Expression(_)).
-        map(new Constraint(_, parma_polyhedra_library.Relation_Symbol.GREATER_OR_EQUAL, zero)).
+        map(new Constraint(
+          _, parma_polyhedra_library.Relation_Symbol.GREATER_OR_EQUAL, zero)).
         foreach(cs.add(_))
     
     val myPoly = new C_Polyhedron(cs)
@@ -118,7 +122,7 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
   def edges(dimA: Int): ArrayBuffer[ABEdge] = 
     edges().map(e => new ABEdge(e.edge, dimA))
   
-  override def toString: String =
+  override def toString(): String =
     "PolyhedralCone\nEqualities\n" + 
     eqs.map(a => "(" + a.mkString(", ") + ")").mkString("\n") + "\n" +
     "Inequalities\n" + 
@@ -129,18 +133,15 @@ object PolyhedralCone {
   def apply(eqs: Array[Array[Int]], ieqs: Array[Array[Int]]) = 
       new PolyhedralCone(eqs, ieqs)
   
-  /*
-   * positiveWeylChamber -- Return the positive Weyl chamber for the 
-   *                        numChamberVars starting at firstChamberVar in a
-   *                        total space of numTotalVars
-   *                        
-   *                        The cone where consecutive variables decrease and
-   *                        sum to zero
-   * 
-   * @param numTotalVars                       
-   * @param firstChamberVar starts counting at 0
-   * @param numChamberVars
-   */
+  /**
+    * Return the positive Weyl chamber for the numChamberVars starting at 
+    * firstChamberVar in a total space of numTotalVars
+    * 
+    * @param numTotalVars total number of variables                       
+    * @param firstChamberVar first chamber variable (indexed from 0)
+    * @param numChamberVars number of chamber variables
+    * @return The cone where consecutive variables decrease and sum to zero
+    */
   def positiveWeylChamber(numTotalVars: Int, 
                           firstChamberVar: Int, 
                           numChamberVars: Int): PolyhedralCone = {
@@ -185,8 +186,8 @@ object PolyhedralCone {
     if (ieqs.size == 0) {
       return PolyhedralCone(Array(), Array())
     } else {
-      val dimA = ieqs.head.u.length
-      val dimB = ieqs.head.v.length
+      val dimA = ieqs.head.dimA
+      val dimB = ieqs.head.dimB
       val dimAB = dimA*dimB
       val totalDim = dimA + dimB + dimAB
       return PolyhedralCone(Array[Array[Int]](),
@@ -225,7 +226,9 @@ class Edge(val edge: Array[Int]) {
     case _ => false
   }
   
-  override def toString: String = "(" + edge.mkString(", ") + ")"
+  def toCSV(): String = edge mkString(",")
+  
+  override def toString(): String = "(" + edge.mkString(", ") + ")"
 }
 
 
@@ -233,6 +236,8 @@ class ABEdge(edge: Array[Int], val dimA: Int) extends Edge(edge) {
   assert(dimA <= edge.length)
   
   def dimB: Int = edge.length - dimA
+  def dimAB: Int = dimA*dimB
+  
   val A = edge.take(dimA).sorted(Ordering.Int.reverse)  // Decreasing order
   val B = edge.drop(dimA).sorted(Ordering.Int.reverse)
   
@@ -260,7 +265,15 @@ class ABEdge(edge: Array[Int], val dimA: Int) extends Edge(edge) {
   def multA(): Array[Int] = mult(A)
   def multB(): Array[Int] = mult(B)
   def multAB(): Array[Int] = mult(AB)
+
+  def csvHeaders(): String = 
+    (1 to dimA).map("a" + _).mkString(",") + "," +
+    (1 to dimB).map("b" + _).mkString(",") + "," +
+    (1 to dimAB).map("c" + _).mkString(",")
+
+  override def toCSV(): String = 
+    A.mkString(",") + "," + B.mkString(",") + "," + AB.mkString(",") 
   
-  override def toString = 
-      "((" + A.mkString(", ") + "), (" + B.mkString(", ") + "))"
+  override def toString(): String = 
+    "((" + A.mkString(", ") + "), (" + B.mkString(", ") + "))"
 }

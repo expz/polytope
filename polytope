@@ -122,7 +122,7 @@ OUTPUT_FILE=polytope$(date +"%H%M%N").txt
 # Run the program, passing on all command line arguments
 "$POLYTOPE_JAVA" \
 -Duser.dir="$DIR_POLYTOPE" \
--Djava.library.path="$DIR_NATIVELIBS" \
+-Djava.library.path="$DIR_NATIVELIBS:$DIR_NATIVELIBS/glibc-2.15/lib:$DIR_NATIVELIBS/glibc-2.15/usr/lib/gconv:$DIR_NATIVELIBS/glibc-2.15/usr/lib/libc" \
 -Dfile.encoding=UTF-8 \
 -classpath \
 bin:\
@@ -137,10 +137,7 @@ lib/jfreechart-1.0.17.jar:\
 lib/jcommon-1.0.21.jar:\
  \
 polytope.package \
-$@ 1> "$OUTPUT_FILE" 
-
-echo Wrote output to:
-echo "$OUTPUT_FILE"
+$@
 
 # If we turned on the local glibc 2.15, then turn it off
 if [ ! "$LIBC_2_14_FOUND" ]; then
