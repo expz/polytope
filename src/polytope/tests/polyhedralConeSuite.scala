@@ -25,64 +25,93 @@ class polyhedralConeSuite extends UnitSpec {
   }
 
   it should "calculate edges of a half-space cone." in {
-    val pc1 = PolyhedralCone(Array(), Array(Array(1, -1)))
-    val pc2 = PolyhedralCone(Array(Array(0, 0), Array(0, 0)), Array(Array(1, -1)))
+    val pc1 = PolyhedralCone(Array(), Array(Array(1, -1, 0)))
+    val pc2 = PolyhedralCone(Array(Array(0, 0, 0), 
+                                   Array(0, 0, 0)), 
+                             Array(Array(1, -1, 0)))
     
-    val es1 = pc1.edges().map(_.edge.toVector).toSet
-    val es2 = pc2.edges().map(_.edge.toVector).toSet
+    val (_rs1, _ps1) = pc1.edges()
+    val (rs1, ps1) = (_rs1.map(_.edge.toVector).toSet, 
+                      _ps1.map(_.edge.toVector).toSet)
+    val (_rs2, _ps2) = pc2.edges()
+    val (rs2, ps2) = (_rs2.map(_.edge.toVector).toSet, 
+                      _ps2.map(_.edge.toVector).toSet)
     
-    es1 should contain allOf (Vector(1, 1), Vector(-1, -1))
-    es1.size should be > 2
-    all (es1.map(v => v(0) - v(1))) should be >= 0
+    rs1 should contain allOf (Vector(1, 1), Vector(-1, -1))
+    rs1.size should be > 2
+    all (rs1.map(v => v(0) - v(1))) should be >= 0
     
-    es2 should contain allOf (Vector(1, 1), Vector(-1, -1))
-    es2.size should be > 2
-    all (es2.map(v => v(0) - v(1))) should be >= 0
+    rs2 should contain allOf (Vector(1, 1), Vector(-1, -1))
+    rs2.size should be > 2
+    all (rs2.map(v => v(0) - v(1))) should be >= 0
   }
   
   it should "calculate edges of a cone with lower dim than ambient space." in {
     val pc = PolyhedralCone(Array(Array(1, -1)), Array(Array(1, -1)))
-    val es = pc.edges().map(_.edge.toVector).toSet
+    val (_rs, _ps) = pc.edges()
+    val (rs, ps) = (_rs.map(_.edge.toVector).toSet, 
+                      _ps.map(_.edge.toVector).toSet)
     
-    es should be (Set(Vector(1, 1), Vector(-1, -1)))
+    rs should be (Set(Vector(1, 1), Vector(-1, -1)))
   }
   
   it should "calculate edges of a non-trivial cone." in {
-    val pc1 = PolyhedralCone(Array(), Array(Array(1, 0), Array(0, 1), Array(-1, 1)))
-    val pc2 = PolyhedralCone(Array(Array(1, 0, -1)), Array(Array(1, 0, 0), Array(0, 1, -1)))
+    val pc1 = PolyhedralCone(Array(), Array(Array(1, 0, 0), 
+                                            Array(0, 1, 0), 
+                                            Array(-1, 1, 0)))
+    val pc2 = PolyhedralCone(Array(Array(1, 0, -1, 0)), 
+                             Array(Array(1, 0, 0, 0), Array(0, 1, -1, 0)))
     
-    pc1.edges().map(_.edge.toVector).toSet should be (Set(Vector(0, 1), Vector(1, 1)))
-    pc2.edges().map(_.edge.toVector).toSet should be (Set(Vector(0, 1, 0), Vector(1, 1, 1)))
+    val (_rs1, _ps1) = pc1.edges()
+    val (rs1, ps1) = (_rs1.map(_.edge.toVector).toSet, 
+                      _ps1.map(_.edge.toVector).toSet)
+    val (_rs2, _ps2) = pc2.edges()
+    val (rs2, ps2) = (_rs2.map(_.edge.toVector).toSet, 
+                      _ps2.map(_.edge.toVector).toSet)
+                      
+    rs1 should be (Set(Vector(0, 1), Vector(1, 1)))
+    rs2 should be (Set(Vector(0, 1, 0), Vector(1, 1, 1)))
   }
   
   it should "calculate AB-edges of a non-trivial cone." in {
-    val pc1 = PolyhedralCone(Array(Array(1, -1, 0, 0), Array(0, 0, 1, -1)), Array(Array(1, 0, 0, 0), Array(0, 0, 1, 0)))
-    pc1.edges(2).map(_.edge.to[ArrayBuffer]).toSet should be (Set(ArrayBuffer(1, 1, 0, 0), ArrayBuffer(0, 0, 1, 1)))
+    val pc1 = PolyhedralCone(Array(Array(1, -1, 0, 0, 0), 
+                                   Array(0, 0, 1, -1, 0)), 
+                             Array(Array(1, 0, 0, 0, 0), 
+                                   Array(0, 0, 1, 0, 0)))
+    val (_rs1, _ps1) = pc1.edges()
+    val (rs1, ps1) = (_rs1.map(_.edge.toVector).toSet, 
+                      _ps1.map(_.edge.toVector).toSet)
+                      
+    rs1 should be (Set(Vector(1, 1, 0, 0), Vector(0, 0, 1, 1)))
   }
     
   it should "make a trivial Weyl chamber." in {
-    val wc1 = PolyhedralCone.positiveWeylChamber(1, 0, 1)
-    val wc2 = PolyhedralCone.positiveWeylChamber(3, 0, 1)
+    val wc1 = PolyhedralCone.positiveWeylChamberDP(List(1))
     
-    // Trace zero assumption!
-    wc1.edges().map(_.edge).toArray.deep should be (Array().deep)
+    // Trace lcm(dims) assumption!
+    val (_rs1, _ps1) = wc1.edges()
+    val (rs1, ps1) = (_rs1.map(_.edge.toVector).toArray, 
+                      _ps1.map(_.edge.toVector).toArray)
+                      
+    rs1.deep should be (Array().deep)
     
-    wc2.edges().map(_.edge.toVector).toSet should contain allOf(Vector(0,1,0),Vector(0,-1,0),Vector(0,0,1),Vector(0,0,-1))
   }
   
   it should "correctly make a non-trivial Weyl chamber." in {
-    val wc1 = PolyhedralCone.positiveWeylChamber(2, 0, 2)
-    val wc2 = PolyhedralCone.positiveWeylChamber(6, 0, 3)
-    val wc3 = PolyhedralCone.positiveWeylChamber(6, 3, 3)
+    val wc1 = PolyhedralCone.positiveWeylChamberDP(List(2))
+    //val wc2 = PolyhedralCone.positiveWeylChamber(6, 0, 3, 0)
+    //val wc3 = PolyhedralCone.positiveWeylChamber(6, 3, 3, 0)
 
-    wc1.eqs.deep should be (Array(Array(1, 1)).deep)
-    wc1.ieqs.deep should be (Array(Array(1, -1)).deep)
-    wc2.eqs.deep should be (Array(Array(1, 1, 1, 0, 0, 0)).deep)
-    wc2.ieqs.deep should be (Array(Array(1, -1, 0, 0, 0, 0), 
-                                   Array(0, 1, -1, 0, 0, 0)).deep)
-    wc3.eqs.deep should be (Array(Array(0, 0, 0, 1, 1, 1)).deep)
-    wc3.ieqs.deep should be (Array(Array(0, 0, 0, 1, -1, 0), 
-                                   Array(0, 0, 0, 0, 1, -1)).deep)    
+    wc1.eqs.deep should be (Array(Array(1, 1, 1)).deep)
+    wc1.ieqs.deep should be (Array(Array(1, -1, 0)).deep)
+    /*
+    wc2.eqs.deep should be (Array(Array(1, 1, 1, 0, 0, 0, 0)).deep)
+    wc2.ieqs.deep should be (Array(Array(1, -1, 0, 0, 0, 0, 0), 
+                                   Array(0, 1, -1, 0, 0, 0, 0)).deep)
+    wc3.eqs.deep should be (Array(Array(0, 0, 0, 1, 1, 1, 0)).deep)
+    wc3.ieqs.deep should be (Array(Array(0, 0, 0, 1, -1, 0, 0), 
+                                   Array(0, 0, 0, 0, 1, -1, 0)).deep)
+    */    
   }
   
   "ABEdge" should "calculate the A and B edges." in {

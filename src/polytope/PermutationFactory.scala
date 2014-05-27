@@ -129,7 +129,8 @@ object PermutationFactory {
         var i = 0
         while (i < n) {
           hops = n - i - 1
-          if (hops <= remainInv && remainInv <= binomial(n-1, 2) + hops) {
+          if (hops <= remainInv && 
+              remainInv <= Arithmetic.binomial(n-1, 2) + hops) {
             // If moving S[i] to the suffix does not break the shuffle property
             if (i == n-1 || S(i+1) > dontPass(S(i)-1))
               moveToSuffix(delete(S, i), remainInv - hops, S(i) +: suffix)

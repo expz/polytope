@@ -20,8 +20,8 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
   // Check that eqs and ineqs all have the same number of coefficients
   assert((eqs ++ ieqs).map(_.length).distinct.length <= 1)
   
-  val dim: Int = if (eqs.length > 0) eqs(0).length
-            else if (ieqs.length > 0) ieqs(0).length
+  val dim: Int = if (eqs.length > 1) (eqs(0).length - 1)
+            else if (ieqs.length > 1) (ieqs(0).length - 1)
             else 0
   
   try {
@@ -50,13 +50,16 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
   /*
    *  Calculates the edges anew every time it is called
    */
-  def edges(): ArrayBuffer[Edge] = {
+  def edges(): (Array[Edge], Array[Edge]) = {
     // The library must be initialized and later finalized
     Parma_Polyhedra_Library.initialize_library()
     
     val cs = new Constraint_System()
-    val vars = for (i <- 0 until dim) yield 
-      new Linear_Expression_Variable(new parma_polyhedra_library.Variable(i))
+    val vars = (
+      for (i <- 0 until dim) yield 
+        new Linear_Expression_Variable(new parma_polyhedra_library.Variable(i))
+    ) ++ Array(new Linear_Expression_Coefficient(
+                 new parma_polyhedra_library.Coefficient(1)))
     
     val zero = new Linear_Expression_Coefficient(
                  new parma_polyhedra_library.Coefficient(0))
@@ -85,10 +88,11 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
     
     val myPoly = new C_Polyhedron(cs)
     val gs = myPoly.generators()
+    
     //
     /*
       SAMPLE ascii_dump() OUTPUT:
-      
+      topology NECESSARILY_CLOSED
       3 x 2 SPARSE (not_sorted)
       index_first_pending 3
       size 3 1 2 0 P (C)
@@ -107,20 +111,28 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
                 )
     val allRays = lines ++ (lines.map(_.map(-_))) ++ rays
     
+    val strPoints = asciiDump.filter(_.indexOf('P')>=0)
+    val points = strPoints.map(
+                   _ drop(5) dropRight(6) split(' ') drop(2) map(_.toInt)
+                 )
     // Convert rays (Array[Int]) to edges and save
-    val es = allRays.map(new Edge(_))
+    val rs = allRays.map(new Edge(_))
+    val ps = points.map(new Edge(_))
     
     // Now we can free the Polyhedron and finalize the library
     myPoly.free()
     Parma_Polyhedra_Library.finalize_library()
     
     // But we saved the edges so return them
-    return es.to[ArrayBuffer]
+    return (rs, ps)
   } 
   
   // Calculate ABEdges
-  def edges(dimA: Int): ArrayBuffer[ABEdge] = 
-    edges().map(e => new ABEdge(e.edge, dimA))
+  def edges(dimA: Int): (Array[ABEdge], Array[ABEdge]) = {
+    val (ps, rs) = edges()
+    return (rs.map(r => new ABEdge(r.edge, dimA)), 
+            ps.map(p => new ABEdge(p.edge, dimA)))
+  }
   
   override def toString(): String =
     "PolyhedralCone\nEqualities\n" + 
@@ -130,72 +142,71 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
 }
 
 object PolyhedralCone {  
-  def apply(eqs: Array[Array[Int]], ieqs: Array[Array[Int]]) = 
+  def apply(eqs: Array[Array[Int]], ieqs: Array[Array[Int]]): PolyhedralCone = 
       new PolyhedralCone(eqs, ieqs)
   
+  // HashSet[T] is invariant in T, therefore its insufficient to use
+  // HashSet[Inequality]
+  def apply[T <: Inequality](ieqs: HashSet[T]): PolyhedralCone =
+    if (ieqs.isEmpty) {
+      apply(Array(), Array())
+    } else {
+      apply(Array[Array[Int]](), ieqs.map(
+              ieq => ieq.toArray() ++ Array(ieq.const)).toArray
+              )
+    }
+  
+  def positiveWeylChamberDM(dims: List[Int]): PolyhedralCone = 
+    positiveWeylChamberDP(dims)
   /**
     * Return the positive Weyl chamber for the numChamberVars starting at 
     * firstChamberVar in a total space of numTotalVars
     * 
-    * @param numTotalVars total number of variables                       
-    * @param firstChamberVar first chamber variable (indexed from 0)
-    * @param numChamberVars number of chamber variables
+    * @param dims dimensions of subspace                       
     * @return The cone where consecutive variables decrease and sum to zero
     */
-  def positiveWeylChamber(numTotalVars: Int, 
-                          firstChamberVar: Int, 
-                          numChamberVars: Int): PolyhedralCone = {
-    assert(numTotalVars >= 0)
-    assert(firstChamberVar >= 0)
-    assert(numChamberVars >= 0 && 
-        (firstChamberVar + numChamberVars <= numTotalVars ||
-        (firstChamberVar == numTotalVars && numChamberVars == 0)))
+  def positiveWeylChamberDP(dims: List[Int]): PolyhedralCone = {
+    //numTotalVars: Int, firstChamberVar: Int, numChamberVars: Int)
     
-    // There will be a single equation
-    val eq = ArrayBuffer.fill[Int](numTotalVars)(0)
+    val totalDim = dims.sum
+    
+    // Equations coeffs*vars + lastcoeff*1 == 0
+    val eqs = ArrayBuffer[Array[Int]]()
+    // Inequalities coeffs*vars + lastcoeff*1 >= 0
+    val ieqs = ArrayBuffer[Array[Int]]()
     
     // Deal with the trivial cases separately
-    if (numChamberVars == 0) {
+    if (totalDim == 0) {
       return new PolyhedralCone(Array(), Array())
-    } else if (numChamberVars == 1) {
-      eq(firstChamberVar) = 1
-      return new PolyhedralCone(Array(eq.toArray), Array())
+    }
+
+    var sumOfDims = 0
+    var d = 0
+    while (d < dims.length) {
+      // The sum of chamber variables is trace
+      eqs += (Array.tabulate[Int](totalDim)(
+        i => if (i >= sumOfDims && i < sumOfDims + dims(d)) 1 else 0
+      ) ++ Array(-Arithmetic.lcm(dims)))
+      
+      if (dims(d) > 1) {
+        // Define the array to hold the inequalities
+        val ieq = ArrayBuffer.fill[Int](totalDim+1)(0)
+            
+        // x(i) > x(i+1) for every x(i), x(i+1) in the chamber variables
+        var i = sumOfDims
+        while (i < sumOfDims + dims(d) - 1) {
+          // Create equations in ieq
+          ieq(i) = 1; ieq(i+1) = -1
+          ieqs.append(ieq.toArray)
+          ieq(i) = 0; ieq(i+1) = 0  // Reset ieq
+          i += 1
+        }
+      }
+      sumOfDims += dims(d)
+      d += 1      
     }
     
-    // The sum of chamber variables is zero (trace zero assumption) 
-    var i = firstChamberVar
-    while (i < firstChamberVar + numChamberVars) { eq(i) = 1; i += 1 }
-    
-    // Define the array to hold the inequalities
-    val ieqs = ArrayBuffer[Array[Int]]()
-    val ieq = ArrayBuffer.fill[Int](numTotalVars)(0)
-        
-    // x(i) > x(i+1) for every x(i), x(i+1) in the chamber variables
-    i = firstChamberVar
-    while (i < firstChamberVar + numChamberVars - 1) {
-      // Create equations in ieq
-      ieq(i) = 1; ieq(i+1) = -1
-      ieqs.append(ieq.toArray)
-      ieq(i) = 0; ieq(i+1) = 0  // Reset ieq
-      i += 1
-    }
-    return new PolyhedralCone(Array(eq.toArray), ieqs.toArray)
-  }
-  
-  def momentPolyhedron(ieqs: HashSet[Inequality]): PolyhedralCone = {
-    if (ieqs.size == 0) {
-      return PolyhedralCone(Array(), Array())
-    } else {
-      val dimA = ieqs.head.dimA
-      val dimB = ieqs.head.dimB
-      val dimAB = dimA*dimB
-      val totalDim = dimA + dimB + dimAB
-      return PolyhedralCone(Array[Array[Int]](),
-                            ieqs.map(_.toArray()).toArray).
-             intersection(positiveWeylChamber(totalDim, 0, dimA)).
-             intersection(positiveWeylChamber(totalDim, dimA, dimB)).
-             intersection(positiveWeylChamber(totalDim, dimA+dimB, dimAB))
-    }
+    return new PolyhedralCone(eqs.toArray, ieqs.toArray)
   }
 }
 

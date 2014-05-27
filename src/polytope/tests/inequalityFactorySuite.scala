@@ -34,9 +34,9 @@ class inequalityFactorySuite extends UnitSpec {
   }
   
   it should "convert inequalities to Latex." in {
-    val ieq1 = new Inequality(Array(1, 2), Array(2, 1), Array(3, 2, 4, 1), 
+    val ieq1 = new InequalityDM(Array(1, 2), Array(2, 1), Array(3, 2, 4, 1), 
                               new ABEdge(Array(1, 0, -1, 2), 2))
-    val ieq2 = new Inequality(Array(), Array(2, 1), Array(),
+    val ieq2 = new InequalityDM(Array(), Array(2, 1), Array(),
                               new ABEdge(Array(0, -1), 0))
     
     ieq1.toLatex.replaceAll(" ", "") should be (
@@ -46,30 +46,31 @@ class inequalityFactorySuite extends UnitSpec {
   }
   
   it should "calculate 2x2x4 inequalities." in {
-    val ieqs = InequalityFactory.ineqs(List(2, 2))
-    val poly = PolyhedralCone.momentPolyhedron(ieqs)
+    val ieqs = InequalityFactory.ineqsDM(List(2, 2))
+    val poly = PolyhedralCone.positiveWeylChamberDM(List(2,2,4)).
+                 intersection(PolyhedralCone(ieqs))
     
     val bravyiPoly = PolyhedralCone(Array[Array[Int]](), Array(
-                                    Array(-1, 1, -1, 1, 2, 0, 0, -2),
-                                    Array(-1, 1, 0, 0, 1, 1, -1, -1),
-                                    Array(0, 0, -1, 1, 1, 1, -1, -1),
-                                    Array(1, -1, -1, 1, 0, 2, 0, -2),
-                                    Array(-1, 1, 1, -1, 0, 2, 0, -2),
-                                    Array(1, -1, -1, 1, 2, 0, -2, 0),
-                                    Array(-1, 1, 1, -1, 2, 0, -2, 0))).
-                     intersection(PolyhedralCone.positiveWeylChamber(8, 0, 2)).
-                     intersection(PolyhedralCone.positiveWeylChamber(8, 2, 2)).
-                     intersection(PolyhedralCone.positiveWeylChamber(8, 4, 4))
+                                    Array(-1, 1, -1, 1, 2, 0, 0, -2, 0),
+                                    Array(-1, 1, 0, 0, 1, 1, -1, -1, 0),
+                                    Array(0, 0, -1, 1, 1, 1, -1, -1, 0),
+                                    Array(1, -1, -1, 1, 0, 2, 0, -2, 0),
+                                    Array(-1, 1, 1, -1, 0, 2, 0, -2, 0),
+                                    Array(1, -1, -1, 1, 2, 0, -2, 0, 0),
+                                    Array(-1, 1, 1, -1, 2, 0, -2, 0, 0))).
+      intersection(PolyhedralCone.positiveWeylChamberDM(List(2, 2, 4)))
 
     println("2x2x4 Inequalities:\n")
     ieqs.foreach(i => println(i.toLatex() + """\\"""))
-    println("\n\n2x2x4 Vertices of polytope:\n")
-    poly.edges().foreach(e => println("(" + e.edge.mkString(", ") + ")"))
-    println()
+    println("\n\n2x2x4 Rays of polytope:\n")
+    val (rs, ps) = poly.edges()
+    rs.foreach(e => println("(" + e.edge.mkString(", ") + ")"))
+    println("\nVertices of polytope:\n")
+    ps.foreach(e => println("(" + e.edge.mkString(", ") + ")"))
     
-    poly.edges().map(_.edge.toVector).toSet should be (
-        bravyiPoly.edges().map(_.edge.toVector).toSet
-    )
+    val (brs, bps) = bravyiPoly.edges()
+    rs.map(_.edge.toVector).toSet should be (brs.map(_.edge.toVector).toSet)
+    ps.map(_.edge.toVector).toSet should be (bps.map(_.edge.toVector).toSet)
     
   }
   
