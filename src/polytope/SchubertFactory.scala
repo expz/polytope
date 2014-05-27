@@ -24,10 +24,10 @@ object SchubertFactory {
   def readPermutation(): Permutation = {
     println("Schubert Polynomial Calculator")
     println("Please enter the number of symbols: ")
-    val n = readInt()
+    val n = scala.io.StdIn.readInt
     return Array.tabulate(n){i => { 
         printf("%d => ", i+1)
-        readInt()
+        scala.io.StdIn.readInt
     }} 
   }
   

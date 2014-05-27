@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Run the polytope program
+# Run the polytope program. Write output to uniquely named file.
 # 
 # WARNING: If working on Brutus, this must be run using 'bsub' to work
 # WARNING: If working on Brutus, the modules must be loaded BEFORE this script
@@ -129,7 +129,8 @@ bin:\
 lib/ppl_java.jar:\
 lib/scala-library.jar:\
 lib/scala-reflect.jar:\
-lib/scalatest_2.10-2.1.0.jar:\
+lib/scala-parser-combinators_2.11-1.0.1.jar:\
+lib/scalatest_2.11-2.1.6.jar:\
 lib/junit-4.8.2.jar:\
 "$DIR_NATIVELIBS/com.google.ortools.jar":\
 lib/scallop_2.10-0.9.5.jar:\
