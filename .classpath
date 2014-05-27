@@ -10,8 +10,6 @@
 	<classpathentry kind="lib" path="lib/jcommon-1.0.21.jar"/>
 	<classpathentry kind="lib" path="lib/jfreechart-1.0.17.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.8.2.jar"/>
-	<classpathentry kind="lib" path="lib/scalatest_2.10-2.1.0.jar"/>
-	<classpathentry kind="lib" path="lib/scallop_2.10-0.9.5.jar"/>
 	<classpathentry kind="lib" path="lib/scala-library.jar"/>
 	<classpathentry kind="lib" path="lib/scala-reflect.jar"/>
 	<classpathentry kind="lib" path="lib/linux_x86/com.google.ortools.jar">
@@ -24,5 +22,8 @@
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="polytope/lib/linux_x86"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="lib/scalatest_2.11-2.1.6.jar"/>
+	<classpathentry kind="lib" path="lib/scala-parser-combinators_2.11-1.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/scallop_2.11-0.9.5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
