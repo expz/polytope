@@ -17,8 +17,9 @@ QUICKSTART
 
 4. Run the application using the configuration:
      Scala Application => Polytope
-   The command line arguments specify the size of the polytope to compute, 
-     e.g., "2 2" computes a 2x2x4 polytope. 
+   The command line arguments can be seen by passing the argument "--help" 
+     Example arguments are "pure -iv 2 2 2" which computes inequalities and
+     vertices of the polytope of pure 2x2x2 distinguishable states.
 
 
 REQUIREMENTS
