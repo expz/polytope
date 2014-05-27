@@ -103,7 +103,7 @@ class SpeedSuite extends UnitSpec {
       val cubicles = RectTableau.standardTableaux(dimA, dimB).filter(_.isAdmissible) 
       println("No. cubicles: " + cubicles.length)
       for (T <- cubicles) {
-        edges.prependAll(T.toCone.edges(dimA))
+        edges.prependAll(T.toCone.edges(dimA)._2)
       }
       println("Total edges: " + edges.length)
       println("No. distinct edges: " + edges.to[HashSet].size)
@@ -151,8 +151,8 @@ class SpeedSuite extends UnitSpec {
   	      val dimAB = dimA*dimB
   	      val Tedges = T.toCone.edges(dimA)
   	      var e = 0
-  	      while (e < Tedges.length) {
-  	        val edge = Tedges(e)
+  	      while (e < Tedges._2.length) {
+  	        val edge = Tedges._2(e)
   	        saveEdges.prepend(edge)
   	        for (u <- PermutationFactory.shuffles(edge.multA)) {
   	          val ul = reducedWord(u).length

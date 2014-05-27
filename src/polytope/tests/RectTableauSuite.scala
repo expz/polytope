@@ -96,9 +96,9 @@ class RectTableauSuite extends UnitSpec {
                                Array(3, 4, 8),
                                Array(5, 7, 9)))
     
-    t1.toCone.edges().map(_.edge.toVector).toSet should be (
+    t1.toCone.edges()._2.map(_.edge.toVector).toSet should be (
         Set(Vector(1, -1, 1, -1), Vector(0, 0, 1, -1)))
-    t2.toCone.edges().map(_.edge.toVector).toSet should be (
+    t2.toCone.edges()._2.map(_.edge.toVector).toSet should be (
         Set(Vector(2, -1, -1, 1, 1, -2), 
             Vector(1, 1, -2, 1, 1, -2), 
             Vector(1, 0, -1, 1, 0, -1), 

@@ -137,10 +137,10 @@ class packageSuite extends UnitSpec {
   }
   
   "binomial" should "produce binomial coefficients." in {
-    binomial(0, 0) should be (1)
-    binomial(4, 0) should be (1)
-    binomial(10, 1) should be (10)
-    binomial(6, 3) should be (20)
+    Arithmetic.binomial(0, 0) should be (1)
+    Arithmetic.binomial(4, 0) should be (1)
+    Arithmetic.binomial(10, 1) should be (10)
+    Arithmetic.binomial(6, 3) should be (20)
   }
   
   "hashMapToString" should "return a string expressing a polynomial" + 

@@ -16,7 +16,8 @@ class RectTableau(val rows: Int,
   
   // Check that rowOfLabel describes a rectangular shape
   assert(rowOfLabel.length == rows*cols)
-  assert(Array.tabulate[Int](rows)(r => rowOfLabel.count(_ == r+1)).find(_ != cols) == None)
+  assert(Array.tabulate[Int](rows)(
+    r => rowOfLabel.count(_ == r+1)).find(_ != cols) == None)
   
   // Load library for doing MIP to check admissibility
   System.loadLibrary("jniortools")
@@ -57,20 +58,19 @@ class RectTableau(val rows: Int,
     }
     matrixForm
   }
-
+  
+  // Mixed states of distinguishable particles
   def toCone = {
-    // Initialize the cone with the intersection of positive Weyl chambers
-    val P = PolyhedralCone.positiveWeylChamber(rows + cols, 0, rows).
-            intersection(
-              PolyhedralCone.positiveWeylChamber(rows + cols, rows, cols)
-            )
+    // Initialize the cone to the trace=lcm(dims) slice of the pos Weyl chamber
+    val P = PolyhedralCone.positiveWeylChamberDM(List(rows, cols))
+    
     // If this is a trivial tableau, then return the positive Weyl Chamber
     if (rows == 0 || cols == 0) P
     
     // Initialize the inequality list to be empty
     val ieqs = Array.newBuilder[Array[Int]]
     // Initialize the inequality to be 0 >= 0
-    val ieq = ArrayBuffer.fill[Int](rows + cols)(0)
+    val ieq = ArrayBuffer.fill[Int](rows + cols + 1)(0)
     // Loop through every quadruple (a[i], b[j], a[k], b[l])
     for (i <- 0 to rows-1) {
       for (j <- 0 to cols-1) {

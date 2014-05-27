@@ -83,14 +83,14 @@ def main(args: Array[String]) {
         val f = opt[String]("cubiclefile",
                              short='f',
                              descr="Only calculate inequalities associated to a particular cubicle (Useful for splitting up calculation into parts)")
-        val cubicles = tally("cubicles", short='u', descr="Print cubicles (TODO)")
-        val edges = tally("edges", short='e', descr="Print integral extremal edges (TODO)")
+        val cubicles = tally("cubicles", short='u', descr="Print cubicles")
+        val potentialIneqs = tally("potentialIneqs", short='p', descr="Count potential inequalities")
         val coeffs = tally("coeffs", short='c', descr="Print nonzero coefficients (TODO)")
-        val ineqs = tally("ineqs", short='i', descr="Print inequalities (TODO)")
-        val vertices = tally("vertices", short='v', descr="Print vertices (TODO)")
+        val ineqs = tally("ineqs", short='i', descr="Print inequalities")
+        val vertices = tally("vertices", short='v', descr="Print vertices")
 
         val all = tally("all", 
-                        descr="Output all calculated polytope features (TODO)")
+                        descr="Output all calculated polytope features")
         val plaintext = tally("plaintext", descr = 
           "Print equations in plain text (Default is LaTeX) (TODO)")
       }
@@ -158,7 +158,7 @@ def main(args: Array[String]) {
         }
       // Otherwise calculate the cubicles anew
       } else {
-        cubicles ++= InequalityFactory.cubicles(dims)
+        cubicles ++= InequalityFactory.cubiclesDM(dims)
       }
       
       // If we should print the cubicles
@@ -186,32 +186,34 @@ def main(args: Array[String]) {
         }
       }
       
-      val edges = 
-        // If we should print extremal edges
-        // Only prints edges (not cubicles which they correspond to)
+      val edges =
         if (Conf.mixed.edges() > 0 || Conf.mixed.all() > 0) {
-          val _edges = InequalityFactory.edges(cubicles)
-          if (Conf.computer.isSupplied) {
-            println("edges:")
-            println(_edges.keys.head.csvHeaders)
-            for (e <- _edges) println(e._1.toCSV)
-          } else {
-            println("The above cubicles correspond to the following edges:\n")
-            for (e <- _edges) println(e._1.toString)
-            println()
-          }
-          _edges
+          InequalityFactory.edgesDM(cubicles)
         } else {
           HashMap[ABEdge, ArrayBuffer[RectTableau]]()
         }
+      
+      // If we should print extremal edges
+      // Only prints edges (not cubicles which they correspond to)
+      if (Conf.mixed.edges() > 0 || Conf.mixed.all() > 0) {
+        if (Conf.computer.isSupplied) {
+          println("edges:")
+          println(edges.keys.head.csvHeaders)
+          for (e <- edges) println(e._1.toCSV)
+        } else {
+          println("The above cubicles correspond to the following edges:\n")
+          for (e <- edges) println(e._1.toString)
+          println()
+        }
+      }
       
       // Calculate all nonzero coefficients. Much more than needed for ineqs.
       val coeffs =
         if (Conf.mixed.coeffs() > 0 || Conf.mixed.all() > 0) {
           if (Conf.mixed.edges() > 0 || Conf.mixed.all() > 0) {
-            InequalityFactory.coeffs(edges)
+            InequalityFactory.coeffsDM(edges)
           } else {
-            InequalityFactory.coeffs(cubicles)
+            InequalityFactory.coeffsDM(cubicles)
           }
         } else {
           ArrayBuffer[PFCoefficient]()
@@ -239,13 +241,13 @@ def main(args: Array[String]) {
             Conf.mixed.all() > 0) {
           // Calculate the inequalities given what we have already computed
           if (Conf.mixed.coeffs() > 0 || Conf.mixed.all() > 0) 
-            InequalityFactory.ineqs(coeffs)
+            InequalityFactory.ineqsDM(coeffs)
           else if (Conf.mixed.edges() > 0)
-            InequalityFactory.ineqs(edges)
+            InequalityFactory.ineqsDM(edges)
           else
-            InequalityFactory.ineqs(cubicles)
+            InequalityFactory.ineqsDM(cubicles)
         } else {
-          HashSet[Inequality]()
+          HashSet[InequalityDM]()
         }
 
       // If we should print the inequalities
@@ -277,26 +279,38 @@ def main(args: Array[String]) {
       
       // If we should calculate vertices
       if (Conf.mixed.vertices() > 0 || Conf.mixed.all() > 0) {
-        val poly = PolyhedralCone.momentPolyhedron(ineqs)
+        val poly = PolyhedralCone.
+                     positiveWeylChamberDM(dims ++ List(dims.product)).
+                     intersection(PolyhedralCone(ineqs))
+        val (rs, ps) = poly.edges()
         
         // Print vertices
         if (Conf.computer() > 0) {
           println("vertices:")
           if (!ineqs.isEmpty) {
-            // CSV Header for vertices
-            println(
+            // CSV Header for vertices (cut off trailing ",const")
+            println(ineqs.head.csvHeaders.dropRight(6) + ",type")
+            /*
               (1 to dims(0)).map("lambdaA" + _).mkString(",") + "," +
               (1 to dims(1)).map("lambdaB" + _).mkString(",") + "," +
               (1 to dims(0)*dims(1)).map("lambdaAB" + _).mkString(",")
-            )
-            poly.edges().foreach(e => println(e.toCSV))
+            )*/
+            ps.foreach(e => println(e.toCSV + ",vertex"))
           }
+          if (!ineqs.isEmpty && !rs.isEmpty)
+            rs.foreach(e => println(e.toCSV + ",ray"))
         } else {
-          println("\n\nVertices of polytope (normalized to trace zero)\n")
-          if (ineqs.size == 0)
+          println("\n\nVertices of polytope (normalized to trace " + 
+                  -poly.eqs.head.last + ")\n")
+          if (ineqs.isEmpty)
             println("The polytope is the whole positive Weyl chamber.")
           else     
-            poly.edges().foreach(e => println(e))
+            ps.foreach(e => println(e))
+          if (!ineqs.isEmpty && !rs.isEmpty) {
+            println("\n\nRays of polytope (normalized to trace " + 
+                    -poly.eqs.head.last + ")\n")
+            rs.foreach(e => println(e))
+          }            
         }
       }
     }
@@ -305,28 +319,120 @@ def main(args: Array[String]) {
      * Calculate a pure polytope
      */
     case Some(Conf.pure) => {
-      val dims = if (Conf.mixed.dims().length == 1) 
-           List(Conf.mixed.dims()(0), 0)
+      val dims = if (Conf.pure.dims().length == 1) 
+           List(Conf.pure.dims()(0), 0)
          else 
-           Conf.mixed.dims()
+           Conf.pure.dims()
 
       if (dims.length > 3) {
         println("polytope: feature not implemented; pure accepts at most three dimensions")
         return
       } 
       
+      // FIXME
       val cubicles = ListBuffer[RectTableau]()
-      if (Conf.mixed.f.isSupplied) {
-        val fileLines = Source.fromFile(Conf.mixed.f()).getLines.toList
-        fileLines.foldLeft(cubicles)((LB, str) => if (str.trim().isEmpty()) LB else LB += RectTableau(str))
-        if (cubicles.length > 0 && (cubicles(0).rows != dims(0) || cubicles(0).cols != dims(1))) {
+      if (Conf.pure.f.isSupplied) {
+        val fileLines = Source.fromFile(Conf.pure.f()).getLines.toList
+        fileLines.foldLeft(cubicles)(
+          (LB, str) => if (str.trim().isEmpty()) LB else LB += RectTableau(str)
+        )
+        if (cubicles.length > 0 && 
+             (cubicles(0).rows != dims(0) || cubicles(0).cols != dims(1))) {
           println("polytope: mismatched cubicle shape")
-          println("the input file had cubicles of shape " + cubicles(0).rows + "x" + cubicles(0).cols + " but the command line dimensions were " + dims(0) + "x" + dims(1))
+          println("the input file had cubicles of shape " + 
+                  cubicles(0).rows + "x" + cubicles(0).cols + 
+                  " but the command line dimensions were " + 
+                  dims(0) + "x" + dims(1))
           return
         }
+      // Otherwise calculate the cubicles anew
+      } else {
+        cubicles ++= InequalityFactory.cubiclesDM(dims.dropRight(1))
+      }
+       
+      if (Conf.pure.potentialIneqs() > 0 || Conf.pure.all() > 0) {
+        val edges = InequalityFactory.edgesDM(cubicles)
+        val potentialIneqs = 
+          InequalityFactory.potentialInequalitiesDP(edges.keys, dims)
+        /*
+        println("potential-inequalities:")
+        if (!potentialIneqs.isEmpty) {
+          println(potentialIneqs.head.csvHeaders)
+          potentialIneqs.foreach(ineq => println(ineq.toCSV))
+        }
+        */
+        println("total-potential-inequalities:")
+        println(potentialIneqs)
       }
       
-      println("polytope: calculation of pure polytope is not implemented")
+      // Calculate the inequalities if necessary
+      val ineqs =
+        if (Conf.pure.ineqs() > 0 || 
+            Conf.pure.vertices() > 0 || 
+            Conf.pure.all() > 0) {
+          // Calculate the inequalities given what we have already computed
+          InequalityFactory.ineqsDP(cubicles, dims)
+        } else {
+          HashSet[InequalityDP]()
+        }
+      
+      // If we should print the inequalities
+      if (Conf.pure.ineqs() > 0 || Conf.pure.all() > 0) {   
+        // If we should print in computer format
+        if (Conf.computer() > 0) {
+          println("inequalities:")
+          if (!ineqs.isEmpty) {
+            println(ineqs.head.csvHeaders)
+            ineqs.foreach(ineq => println(ineq.toCSV))
+          }
+        // Else print in readable format
+        } else {
+          if (Conf.pure.plaintext() > 0) {
+            // TODO: Print inequalities in plaintext instead of LaTeX
+            println(dims(0) + "x" + dims(1) + "x" + dims(0)*dims(1) + 
+                    " Inequalities\n")
+            if (ineqs.size == 0) println("There are no inequalities.")
+            else ineqs.foreach(i => println(i.toLatex() + """\\"""))
+          } else {
+            println(dims(0) + "x" + dims(1) + "x" + dims(0)*dims(1) + 
+                    " Inequalities\n")
+            if (ineqs.size == 0) println("There are no inequalities.")
+            else ineqs.foreach(i => println(i.toLatex() + """\\"""))          
+          }
+        }
+      }
+
+      if (Conf.pure.vertices() > 0 || Conf.pure.all() > 0) {
+        val polytope = PolyhedralCone.positiveWeylChamberDP(dims).
+                         intersection(PolyhedralCone(ineqs))
+        
+        val (rs, ps) = polytope.edges()
+        
+        // Print vertices
+        if (Conf.computer() > 0) {
+          println("vertices:")
+          if (!ineqs.isEmpty) {
+            // CSV Header for vertices (cut off trailing ",const")
+            println(ineqs.head.csvHeaders.dropRight(6) + ",type")
+            ps.foreach(e => println(e.toCSV + ",vertex"))
+          }
+          if (!ineqs.isEmpty && !rs.isEmpty) {
+            rs.foreach(e => println(e.toCSV + ",ray"))
+          }
+        } else {
+          println("\n\nVertices of polytope (normalized to trace " + 
+                  -polytope.eqs.head.last + ")\n")
+          if (!ineqs.isEmpty)
+            ps.foreach(e => println(e))
+          else
+            println("The polytope is the whole positive Weyl chamber.")
+          if (!ineqs.isEmpty && !rs.isEmpty) {
+            println("\n\nRays of polytope (normalized to trace " + 
+                    -polytope.eqs.head.last + ")\n")
+            rs.foreach(e => println(e))
+          }
+        }
+      }
     }
     
     /**********************************
@@ -481,34 +587,13 @@ def binomialExpansion(firstvar: Int, secondvar: Int, exp: Int): HashMap[Long, In
   var k = 0
   while (k <= exp) {
     term = 0L
-    p += addToExp(addToExp(term, firstvar, k), secondvar, exp-k) -> binomial(exp, k)
+    p += addToExp(addToExp(term, firstvar, k), secondvar, exp-k) -> 
+           Arithmetic.binomial(exp, k)
     k += 1
   }
   return p
 }
 
-/*
- * Calculate the binomial coefficient n Choose k
- * 
- */
-def binomial(n: Int, k: Int): Int = {
-  var r = 1
-  var d = n - k
-  var nn = n; var kk = k
-  
-  /* choose the smaller of k and n - k */
-  if (d > kk) { kk = d; d = nn - kk } 
-  while (nn > kk) {
-    r *= nn
-    nn -= 1
-    /* divide (n - k)! as soon as we can to delay overflows */
-    while (d > 1 && (r % d == 0)) {
-      r /= d
-      d -= 1
-    }
-  }
-  return r
-}
 
 /*
  * delta() -- The multiple divided difference del_u(f) acting on the sequence 
