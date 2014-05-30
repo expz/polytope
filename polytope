@@ -10,6 +10,7 @@
 
 # Get the name of the directory containing this script
 DIR_POLYTOPE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+#DIR_POLYTOPE="/cluster/home02/phys/jskowera/polytope"
 
 # Change to the root polytope directory
 cd "$DIR_POLYTOPE"
@@ -24,7 +25,7 @@ if [[ "$HOSTNAME" == brutus* ]]; then
   module load gcc/4.7       1>/dev/null
 
   # Configure the Java command
-  POLYTOPE_JAVA="java -XX:+UseSerialGC"
+  #POLYTOPE_JAVA="java -XX:+UseSerialGC"
 
 else
   
@@ -73,6 +74,13 @@ else
 
 fi
 
+# At least Brutus cares that the LD_LIBRARY_PATH is also set
+if [ ! "$POLYTOPE_LD_PATH_SET" ]; then 
+
+  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DIR_POLYTOPE/$DIR_NATIVELIBS
+  POLYTOPE_LD_PATH_SET=true
+
+fi
 
 # If the version of glibc is less than 2.14, then turn on the local glibc 2.15
 # Get all libc6 libraries
@@ -118,7 +126,6 @@ if [ ! "$LIBC_2_14_FOUND" ]; then
 
 fi
 
-OUTPUT_FILE=polytope$(date +"%H%M%N").txt
 
 # -Xdisable-assertions \
 # Run the program, passing on all command line arguments
