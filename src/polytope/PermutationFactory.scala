@@ -4,10 +4,14 @@ import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 object PermutationFactory {
+  /** Returns ArrayBuffer of all permutations on n letters
+    *  
+    * @param n size of permutations
+    * @returns All permutations on n letters
+    */
   def permutationsOfSize(n: Int): ArrayBuffer[Permutation] = 
         ArrayBuffer[Permutation]() ++ Array.tabulate[Int](n)(_+1).permutations
-
-  
+ 
   def shiftedShuffleProduct(w1: Permutation, w2: Permutation): 
         ArrayBuffer[Permutation] = {
     distinctShuffleProduct((w1 ++ w2.map(k => k + w1.length)).to[ArrayBuffer], 

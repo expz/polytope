@@ -186,24 +186,48 @@ def main(args: Array[String]) {
         }
       }
       
-      val edges =
-        if (Conf.mixed.edges() > 0 || Conf.mixed.all() > 0) {
-          InequalityFactory.edgesDM(cubicles)
+      val calculateEdgesWithAdjacentCubicles = 
+        (Conf.mixed.coeffs() > 0 || Conf.mixed.ineqs() > 0 ||
+         Conf.mixed.vertices() > 0 || Conf.mixed.all() > 0)
+         
+      val edgesWithAdjacentCubicles =
+        if (calculateEdgesWithAdjacentCubicles) {
+          // Need edges with adjacent cubicles
+          InequalityFactory.edgesWithAdjacentCubiclesDM(cubicles)
         } else {
           HashMap[ABEdge, ArrayBuffer[RectTableau]]()
+        }
+      
+      val edges =
+        if (calculateEdgesWithAdjacentCubicles) {
+          HashSet[ABEdge]()
+        } else {
+          InequalityFactory.edgesDM(cubicles)
         }
       
       // If we should print extremal edges
       // Only prints edges (not cubicles which they correspond to)
       if (Conf.mixed.edges() > 0 || Conf.mixed.all() > 0) {
-        if (Conf.computer.isSupplied) {
-          println("edges:")
-          println(edges.keys.head.csvHeaders)
-          for (e <- edges) println(e._1.toCSV)
+        if (calculateEdgesWithAdjacentCubicles) {
+          if (Conf.computer.isSupplied) {
+            println("edges:")
+            println(edgesWithAdjacentCubicles.keys.head.csvHeaders)
+            for (e <- edgesWithAdjacentCubicles) println(e._1.toCSV)
+          } else {
+            println("The above cubicles correspond to the following edges:\n")
+            for (e <- edgesWithAdjacentCubicles) println(e._1.toString)
+            println()
+          }
         } else {
-          println("The above cubicles correspond to the following edges:\n")
-          for (e <- edges) println(e._1.toString)
-          println()
+          if (Conf.computer.isSupplied) {
+            println("edges:")
+            println(edges.head.csvHeaders)
+            for (e <- edges) println(e.toCSV)
+          } else {
+            println("The above cubicles correspond to the following edges:\n")
+            for (e <- edges) println(e.toString)
+            println()
+          }
         }
       }
       
@@ -211,7 +235,7 @@ def main(args: Array[String]) {
       val coeffs =
         if (Conf.mixed.coeffs() > 0 || Conf.mixed.all() > 0) {
           if (Conf.mixed.edges() > 0 || Conf.mixed.all() > 0) {
-            InequalityFactory.coeffsDM(edges)
+            InequalityFactory.coeffsDM(edgesWithAdjacentCubicles)
           } else {
             InequalityFactory.coeffsDM(cubicles)
           }
@@ -243,7 +267,7 @@ def main(args: Array[String]) {
           if (Conf.mixed.coeffs() > 0 || Conf.mixed.all() > 0) 
             InequalityFactory.ineqsDM(coeffs)
           else if (Conf.mixed.edges() > 0)
-            InequalityFactory.ineqsDM(edges)
+            InequalityFactory.ineqsDM(edgesWithAdjacentCubicles)
           else
             InequalityFactory.ineqsDM(cubicles)
         } else {
@@ -353,7 +377,7 @@ def main(args: Array[String]) {
       if (Conf.pure.potentialIneqs() > 0 || Conf.pure.all() > 0) {
         val edges = InequalityFactory.edgesDM(cubicles)
         val potentialIneqs = 
-          InequalityFactory.potentialInequalitiesDP(edges.keys, dims)
+          InequalityFactory.potentialInequalitiesDP(edges, dims)
         /*
         println("potential-inequalities:")
         if (!potentialIneqs.isEmpty) {

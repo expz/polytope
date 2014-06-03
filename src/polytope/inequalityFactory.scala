@@ -35,7 +35,7 @@ object InequalityFactory {
     * @param cubicles cubicles of which to compute the extremal edges
     * @return map from an extremal edge to cubicles containing it
     */ 
-  def edgesDM(cubicles: ListBuffer[RectTableau]): 
+  def edgesWithAdjacentCubiclesDM(cubicles: ListBuffer[RectTableau]): 
     HashMap[ABEdge, ArrayBuffer[RectTableau]] = {
     val es = HashMap[ABEdge, ArrayBuffer[RectTableau]]()
     if (!cubicles.isEmpty) {
@@ -49,7 +49,20 @@ object InequalityFactory {
     }
     return es
   }
-  
+
+  def edgesDM(cubicles: ListBuffer[RectTableau]): HashSet[ABEdge] = {
+    val es = HashSet[ABEdge]()
+    if (!cubicles.isEmpty) {
+      val dims = List(cubicles(0).rows, cubicles(0).cols)
+      for (T <- cubicles) {
+        for (e <- T.toCone.edges(dims(0))._2) {
+          es += e
+        }
+      }
+    }
+    return es
+  }
+    
   def potentialInequalitiesDP(edges: Iterable[ABEdge], dims: List[Int]): Int = {
     val ineqs = HashSet[List[Int]]()
     if (!dims.isEmpty) {
@@ -71,6 +84,7 @@ object InequalityFactory {
     }
     return ineqs.size
   }
+  
   /** Returns ArrayBuffer of all nonzero product flag coefficients relevant for
     * distinguishable particles mixed polytope corresponding to the given edges
     * 
