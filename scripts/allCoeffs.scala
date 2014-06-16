@@ -19,14 +19,23 @@ object AllCoeffs extends App {
   val dims = List(args(0).toInt, args(1).toInt)
   val cubicles = InequalityFactory.cubiclesDM(dims)
   val cs = ArrayBuffer[PFCoefficient]()
+  val w0 = Array.tabulate[Int](dims(0)*dims(1))(dims(0)*dims(1) - _)
+
   for (u <- PermutationFactory.permutationsOfSize(dims(0))) {
     for (v <- PermutationFactory.permutationsOfSize(dims(1))) {
       for (w <- PermutationFactory.permutationsOfSize(dims(0)*dims(1))) {
         val (ur, vr, wr) = (reducedWord(u), reducedWord(v), reducedWord(w))
+        val wprime = act(w0, inverse(w))
+        val wprimer = reducedWord(wprime)
         if (wr.length == ur.length + vr.length) {
           for (T <- cubicles) {
             val cc = hashMapToString(InequalityFactory.c(u, v, w, T), 2, 2)
-            println(ur.mkString(",") + ";" + vr.mkString(",") + ";" + wr.mkString(",") + ";" + T.toCSV + ";" + cc)
+            println(ur.mkString(",") + ";" +
+                    vr.mkString(",") + ";" +
+                    wr.mkString(",") + ";" +
+                    wprimer.mkString(",") + ";" +
+                    T.toCSV + ";" +
+                    cc)
           }
         }
       }
