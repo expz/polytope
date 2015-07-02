@@ -71,6 +71,13 @@ else
 
 fi
 
+# At least Brutus cares that the LD_LIBRARY_PATH is also set
+if [ ! "$POLYTOPE_LD_PATH_SET" ]; then 
+
+  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DIR_POLYTOPE/$DIR_NATIVELIBS
+  POLYTOPE_LD_PATH_SET=true
+
+fi
 
 # If the version of glibc is less than 2.14, then turn on the local glibc 2.15
 # Get all libc6 libraries
@@ -133,7 +140,7 @@ lib/scala-parser-combinators_2.11-1.0.1.jar:\
 lib/scalatest_2.11-2.1.6.jar:\
 lib/junit-4.8.2.jar:\
 "$DIR_NATIVELIBS/com.google.ortools.jar":\
-lib/scallop_2.10-0.9.5.jar:\
+lib/scallop_2.11-0.9.5.jar:\
 lib/jfreechart-1.0.17.jar:\
 lib/jcommon-1.0.21.jar:\
  \
