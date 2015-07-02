@@ -104,9 +104,8 @@ def main(args: Array[String]) {
                           noshort=true, 
                           descr="Output version information and exit")
       footer("\n" +
-             "Report bugs to jskowera@gmail.com\n" +
-             "Source code available at " +
-             "<https://github.com/expz/entanglement-polytopes/>")
+             "Bug reporting and source code available at " +
+             "<https://github.com/expz/polytope/>")
       
     }
     
