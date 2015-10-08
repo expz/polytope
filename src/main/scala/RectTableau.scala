@@ -8,7 +8,11 @@ import scala.util.parsing.combinator._
 
 import com.google.ortools.linearsolver.MPConstraint
 import com.google.ortools.linearsolver.MPSolver
+import com.google.ortools.linearsolver.MPSolver.OptimizationProblemType
+import com.google.ortools.linearsolver.MPSolver.ResultStatus
 import com.google.ortools.linearsolver.MPVariable
+
+import java.util.UUID
 
 class RectTableau(val rows: Int, 
                   val cols: Int, 
@@ -160,7 +164,7 @@ class RectTableau(val rows: Int,
     // Sanity check
     if (!isStandardTableau) return false
     
-    val solver = new MPSolver("", MPSolver.CBC_MIXED_INTEGER_PROGRAMMING)
+    val solver = new MPSolver(UUID.randomUUID().toString(), OptimizationProblemType.CBC_MIXED_INTEGER_PROGRAMMING)
     
     val eps = 1.0
     
@@ -222,7 +226,7 @@ class RectTableau(val rows: Int,
     
     // Attempt to solve
     val result = solver.solve()
-    return (result == MPSolver.OPTIMAL)
+    return (result == MPSolver.ResultStatus.OPTIMAL)
   }
 }
 

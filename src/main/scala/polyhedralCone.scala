@@ -25,6 +25,8 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
             else 0
   
   try {
+    System.loadLibrary("gmp")
+    System.loadLibrary("ppl")
     System.loadLibrary("ppl_java")
   } catch {
     case e: UnsatisfiedLinkError => {
@@ -52,7 +54,7 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
    */
   def edges(): (Array[Edge], Array[Edge]) = {
     // The library must be initialized and later finalized
-    Parma_Polyhedra_Library.initialize_library()
+    //Parma_Polyhedra_Library.initialize_library()
     
     val cs = new Constraint_System()
     val vars = (
@@ -69,8 +71,9 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
       coeffs.foldLeft[(Linear_Expression, Int)]((zero, 0))(
         (keyVal, c) => (new Linear_Expression_Sum(keyVal._1, 
                           new Linear_Expression_Times(
-                            new parma_polyhedra_library.Coefficient(c), 
-                            vars(keyVal._2))), 
+                            vars(keyVal._2),
+                            new parma_polyhedra_library.Coefficient(c)
+                            )), 
                          keyVal._2 + 1)
        )._1
     
@@ -121,7 +124,6 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
     
     // Now we can free the Polyhedron and finalize the library
     myPoly.free()
-    Parma_Polyhedra_Library.finalize_library()
     
     // But we saved the edges so return them
     return (rs, ps)

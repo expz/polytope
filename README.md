@@ -1,4 +1,4 @@
-Polytope
+## Polytope
 
 This library can be used to calculate generic (as in "full") entanglement polytopes for 
 distinguishable particles. These arise in the study of quantum computing.
@@ -12,49 +12,46 @@ on an operations research library compiled in native (Linux) code. It can
 easily be modified to be purely Java if you know a good Java library for 
 doing Mixed Integer Programming (MIP).
 
-LICENSE
+### LICENSE
 
 I would release it under MIT, but I distribute it to work out of the box using a GPL library (Parma), so it is GPL.
 
-QUICKSTART USAGE
+### QUICKSTART USAGE
 
 1. Download the entire repository and unzip it.
 
 2. Open a console window and run the command:
-     $ ./polytope --help
-   This will display all the command line arguments.
+   ```
+   $ ./polytope --help
+   ```
+   This will display all the command line arguments. Also try computing inequalities and vertices of the polytope of pure 2x2x2 distinguishable states:
+   ```
+   $ ./polytope pure -iv 2 2 2"
+   ```
 
-QUICKSTART DEVELOPMENT
+### QUICKSTART DEVELOPMENT
 
-1. Clone the entire repository onto a local machine.
+1. Install Scala 2.11.7 and sbt 0.13.9
 
-2. Open Eclipse (the Scala plugins must be installed!)
+2. Clone the entire repository onto a local machine.
 
-3. Import the existing project into the workspace.
+3. Make changes to code
 
-4. Run the application using the configuration:
-     Scala Application => Polytope
-   The command line arguments can be seen by passing the argument "--help" 
-     Example arguments are "pure -iv 2 2 2" which computes inequalities and
-     vertices of the polytope of pure 2x2x2 distinguishable states.
+4. Run `sbt compile` to compile or `sbt test` to run tests.
 
+### REQUIREMENTS
 
-REQUIREMENTS
+* Linux (amd64)
+* sbt
 
-Linux 32/64-bit System
+For other platforms, the correct ppl and google-ortools libraries must be download and placed in `lib/` (TODO: Fix this).
 
-TODO
-
--- Migrate to sbt and remove included libraries
-
-
-INCLUDED LIBRARIES
+### INCLUDED LIBRARIES
 
 All necessary libraries are included. As far as native libraries, the master 
-branch currently links to 32-bit Linux libraries (which of course also run on 
-64-bit Linux).
+branch currently links to 64-bit Linux.
 
-Java Libraries:
+__Libraries:__
 
 -- Parma polyhedral library for calculating edges of a polyhedral cone 
    (http://bugseng.com/products/ppl) (GPLv3 License)
@@ -69,10 +66,12 @@ Java Libraries:
 -- ScalaTest 2.1.0 for writing tests of the code
    (https://github.com/scalatest/scalatest) (Apache 2.0 License)
    
-Native Libraries:
+__Supporting Libraries:__
 
--- COIN Branch and Cut (CBC) Solver for mixed integer programming (MIP)
-   (http://www.coin-or.org/projects/Cbc.xml) (Eclipse Public License 1.0)
-   
+-- GNU Multiple Precision Arithmetic Library
+   (https://gmplib.org) (GPLv2 License)
+
+(A previous version used the COIN CBC Solver library (Eclise Public License 1.0) directly, but it is now included in the Google OR Tools.) 
+
 (A previous version used the GLPK integer programming library, but it is not
 thread-safe.)
