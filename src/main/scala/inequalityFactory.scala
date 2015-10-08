@@ -349,15 +349,13 @@ class MarginalInequality(coeffs: Array[Int], val dims: List[Int], const: Int)
     while (d < dims.length) {
       var i = 0
       while (i < dims(d)) {
+        val term = format(coeffs(sumOfDims+i), latexVarnames(d) + "_{" + (i+1) + "}")
         if (b.length == 1) {
-          b ++= format(coeffs(sumOfDims+i), 
-                       latexVarnames(d) + "_{" + (i+1) + "}")
+          b ++= term
         } else if (coeffs(sumOfDims+i) < 0) {
-          b ++= " - " + format(-coeffs(sumOfDims+i), 
-                               latexVarnames(d) + "_{" + (i+1) + "}")
+          b ++= " - " + term.drop(1)
         } else if (coeffs(sumOfDims+i) > 0) {
-          b ++= " + " + format(coeffs(sumOfDims+i), 
-                               latexVarnames(d) + "_{" + (i+1) + "}") 
+          b ++= " + " + term 
         }
         i += 1
       }
@@ -451,12 +449,13 @@ class InequalityDM(coeffs: Array[Int], dims: List[Int], const: Int = 0)
     // We move the coefficients of \lambda^A to the LHS of the <=    
     var i = 0
     while (i < dimA) {
+      val term = format(-coeffs(i), "\\lambda^A_{" + (i+1) + "}")
       if (b.length == 1) {
-        b ++= format(-coeffs(i), "\\lambda^A_{" + (i+1) + "}")
+        b ++= term 
       } else if (-coeffs(i) < 0) {
-        b ++= " - " + format(coeffs(i), "\\lambda^A_{" + (i+1) + "}")
+        b ++= " - " + term.drop(1)
       } else if (-coeffs(i) > 0) {
-        b ++= " + " + format(-coeffs(i), "\\lambda^A_{" + (i+1) + "}") 
+        b ++= " + " + term 
       }
       i += 1
     }
@@ -464,38 +463,38 @@ class InequalityDM(coeffs: Array[Int], dims: List[Int], const: Int = 0)
     // We move the coefficients of \lambda^B to the LHS of the <=
     i = dimA
     while (i < dimA + dimB) {
+      val term = format(-coeffs(i), "\\lambda^B_{" + (i+1-dimA) + "}")
       if (b.length == 1) {
-        b ++= format(-coeffs(i), "\\lambda^B_{" + (i+1-dimA) + "}")
+        b ++= term
       } else if (-coeffs(i) < 0) {
-        b ++= " - " + format(coeffs(i), "\\lambda^B_{" + (i+1-dimA) + "}")
+        b ++= " - " + term.drop(1)
       } else if (-coeffs(i) > 0) {
-        b ++= " + " + format(-coeffs(i), "\\lambda^B_{" + (i+1-dimA) + "}")
+        b ++= " + " + term
       }
       i += 1
     }
     if (b.length == 1) b += '0'
     b ++= " \\leq "
       
-    var zero = true
+    var zeroRHS = true
     i = dimA + dimB
     while (i < dimA + dimB + dimAB) {
-      if (zero && coeffs(i) != 0) {
-        zero = false
-        b ++= format(coeffs(i), "\\lambda^{AB}_{" + (i+1-dimA-dimB) + "}")
+      val term = format(coeffs(i), "\\lambda^{AB}_{" + (i+1-dimA-dimB) + "}")
+      if (zeroRHS && coeffs(i) != 0) {
+        zeroRHS = false
+        b ++= term
       } else if (coeffs(i) > 0) {
-        b ++= " + " + 
-              format(coeffs(i), "\\lambda^{AB}_{" + (i+1-dimA-dimB) + "}")
+        b ++= " + " + term
       } else if (coeffs(i) < 0) {
-        b ++= " - " + 
-              format(-coeffs(i), "\\lambda^{AB}_{" + (i+1-dimA-dimB) + "}")
+        b ++= " - " + term.drop(1)
       }
       i += 1
     }
     // If the coefficients were all zero, then put just the constant on the RHS
-    if (zero) b ++= (-const).toString
+    if (zeroRHS) b ++= (-const).toString
     // Else write a +/- and the constant
     else if (const > 0) b ++= " - " + const
-    else b ++= " + " + (-const)
+    else if (const < 0) b ++= " + " + (-const)
 
     // Close off the LaTeX and return
     b += '$'

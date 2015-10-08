@@ -40,9 +40,9 @@ class inequalityFactorySuite extends UnitSpec {
                               new ABEdge(Array(0, -1), 0))
     
     ieq1.toLatex.replaceAll(" ", "") should be (
-           """$\lambda^A_1-\lambda^B_1+2\lambda^B_2\leq"""
-         + """-\lambda^{AB}_1+2\lambda^{AB}_2+3\lambda^{AB}_3$""")
-    ieq2.toLatex.replaceAll(" ", "") should be ("""$-\lambda^B_1\leq0$""")
+           """$\lambda^A_{1}-\lambda^B_{1}+2\lambda^B_{2}\leq"""
+         + """-\lambda^{AB}_{1}+2\lambda^{AB}_{2}+3\lambda^{AB}_{3}$""")
+    ieq2.toLatex.replaceAll(" ", "") should be ("""$-\lambda^B_{1}\leq0$""")
   }
   
   it should "calculate 2x2x4 inequalities." in {
