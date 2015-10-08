@@ -154,9 +154,9 @@ class packageSuite extends UnitSpec {
     hashMapToString(f1).toString should be ("0")
     hashMapToString(f2).toString should be ("0")
     hashMapToString(f3).toString should be ("-2")
-    hashMapToString(f4).toString should be ("3*x0^2")
+    hashMapToString(f4).toString should be ("3*z1^2")
     // Lexicographic order
-    hashMapToString(f5).toString should be ("x0 + x0*x1 + 3*x0*x1^2 + x0^2*x1^2")
+    hashMapToString(f5).toString should be ("z1 + z1*z2 + 3*z1*z2^2 + z1^2*z2^2")
   }
   
   "inverse" should "invert a permutation." in {

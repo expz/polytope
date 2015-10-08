@@ -483,7 +483,7 @@ def act[A](p: Permutation, a: Array[A])(implicit tag: ClassTag[A]): Array[A] = {
     pa += a(p(i)-1)
     i += 1
   }
-  return pa.toArray[A]
+  pa.toArray[A]
 }
 
 /*
@@ -502,7 +502,7 @@ def toLehmerCode(p: Permutation): ArrayBuffer[Int] = {
     i = 0
     N = 0
     while (i < ab.length) { N += ab(i); i += 1 }
-    return N
+    N
   }
   
   val code = ArrayBuffer[Int]()
@@ -514,7 +514,7 @@ def toLehmerCode(p: Permutation): ArrayBuffer[Int] = {
     code += sum(checked.take(k))
     j += 1
   }
-  return code
+  code
 }
 
 /*
@@ -533,20 +533,20 @@ def isInteger(f: Polynomial): Boolean = {
     if (f(i) != 0L) return false
     i += 1
   }
-  return true
+  true
 }
 
 def isInteger(f: HashMap[Long, Int]): Boolean = {
   if (f.isEmpty) return true
   var i = 0
   f.foreach( keyVal => if (keyVal._1 != 0L && keyVal._2 != 0) return false )
-  return true
+  true
 }
 
 def isZero(f: HashMap[Long, Int]): Boolean = {
   if (f.isEmpty) return true
   f.foreach( keyVal => if (keyVal._2 != 0) return false)
-  return true
+  true
 }
 
 /*
@@ -573,7 +573,7 @@ def subst(f: HashMap[Long, Int], T: RectTableau): HashMap[Long, Int] = {
     }
     addInPlace(substF, substTerm)
   }
-  return substF
+  substF
 }
 
 /*
@@ -593,7 +593,7 @@ def multiply(p1: HashMap[Long, Int], p2: HashMap[Long, Int]): HashMap[Long, Int]
       addInPlace(prod, multiplyTerms(term1, term2), p1(term1)*p2(term2))
     }
   }
-  return prod
+  prod
 }
 
 // WARNING: No check that exponents are between 0 and 15
@@ -614,7 +614,7 @@ def binomialExpansion(firstvar: Int, secondvar: Int, exp: Int): HashMap[Long, In
            Arithmetic.binomial(exp, k)
     k += 1
   }
-  return p
+  p
 }
 
 
@@ -676,7 +676,7 @@ def delta(u: Permutation, hm: HashMap[Long, Int], offset: Int)
     f = deltaF
     i += 1
   }
-  return f
+  f
 }
 
 @inline
@@ -695,14 +695,14 @@ def isZero(p: Polynomial): Boolean = {
   for (t <- p) {
     if (t != 0L) return false
   }
-  return true
+  true
 }
 
 @inline
 def collectTerms(p: Polynomial): HashMap[Long, Int] = {
   val hm = HashMap[Long,Int]()
   p.foreach(t => hm(t) = hm.getOrElse(t, 0) + 1)
-  return hm
+  hm
 }
 
 def polyToString(p: Polynomial): StringBuilder = {
@@ -715,13 +715,14 @@ def polyToLatex(p: Polynomial): StringBuilder = {
   hashMapToLatex(collectTerms(p))
 }
 
-def hashMapToString(hm: HashMap[Term, Int], xvars: Int, yvars: Int): StringBuilder = {
-  return hashMapToString(hm, Array.tabulate[String](xvars)(n => "x" + (n+1)) ++ Array.tabulate[String](yvars)(n => "y" + (n+1)))
-}
+def hashMapToString(hm: HashMap[Term, Int], xvars: Int, yvars: Int): StringBuilder =
+  hashMapToString(hm, Array.tabulate[String](xvars)(n => "x" + (n+1)) ++ Array.tabulate[String](yvars)(n => "y" + (n+1)))
 
 def hashMapToString(hm: HashMap[Term, Int], varnames: Array[String]): StringBuilder = {
   if (hm.isEmpty) return new StringBuilder("0")
-  val s = hm.foldLeft(new StringBuilder)((s,kv) => {
+  val s = hm.toSeq.
+             sortBy(_._1).
+             foldLeft(new StringBuilder)((s,kv) => {
     if (s.size != 0) {
       if (kv._2 != 0) { 
         if (kv._2 != 1) {
@@ -750,27 +751,53 @@ def hashMapToString(hm: HashMap[Term, Int], varnames: Array[String]): StringBuil
     }
     s
   })
-  if (s.length == 0) return new StringBuilder("0")
-  else return s  
+  if (s.length == 0) new StringBuilder("0")
+  else s  
 }
 
-def hashMapToString(hm: HashMap[Term, Int]): StringBuilder = {
-  return hashMapToString(hm, Array.tabulate[String](16)(n => "z" + (n+1)))
-}
+def hashMapToString(hm: HashMap[Term, Int]): StringBuilder =
+  hashMapToString(hm, Array.tabulate[String](16)(n => "z" + (n+1)))
 
-def hashMapToLatex(hm: HashMap[Term, Int]): StringBuilder = {
-  hm.foldLeft(new StringBuilder)((s, keyval) => {
+def hashMapToLatex(hm: HashMap[Term, Int], varnames: Array[String]): StringBuilder = {
+  if (hm.isEmpty) return new StringBuilder("0")
+  val s = hm.toSeq.
+             sortBy(_._1).
+             foldLeft(new StringBuilder)((s,kv) => {
     if (s.size != 0) {
-      if (keyval._2 != 1) s.appendAll(" + " + keyval._2.toString + termToLatex(keyval._1))
-      else s.appendAll(" + " + termToLatex(keyval._1))
-    }
+      if (kv._2 != 0) { 
+        if (kv._2 != 1) {
+          s.appendAll(" + " + kv._2.toString)
+          if (kv._1 != 0L) s.appendAll("*" + termToLatex(kv._1, varnames))
+        }
+        else {
+          s.appendAll(" + ")
+          if (kv._1 != 0L) s.appendAll(termToLatex(kv._1, varnames))
+          else s.append('1')
+        }
+        
+      }
+    } 
     else {
-      if (keyval._2 != 1) s.appendAll(keyval._2.toString + termToLatex(keyval._1))
-      else s.appendAll(termToLatex(keyval._1))
+      if (kv._2 != 0) {
+        if(kv._2 != 1) {
+          s.appendAll(kv._2.toString)
+          if (kv._1 != 0L) s.appendAll("*" + termToLatex(kv._1, varnames))
+        }
+        else {
+          if (kv._1 != 0L) s.appendAll(termToLatex(kv._1, varnames))
+          else s.append('1')
+        }
+      }
     }
     s
   })
+  if (s.length == 0) new StringBuilder("0")
+  else s  
 }
+
+def hashMapToLatex(hm: HashMap[Term, Int]): StringBuilder =
+  hashMapToLatex(hm, Array.tabulate[String](16)(n => "z" + (n+1)))
+
 
 def isIdentity(perm: Permutation): Boolean = {
     var i: Int = 0
@@ -778,7 +805,7 @@ def isIdentity(perm: Permutation): Boolean = {
         if (perm(i) != i+1) return false
         i += 1
     }
-    return true
+    true
 }
  
 // A term with at most 16 variables whose exponents are at most 15
@@ -809,23 +836,6 @@ def getExp(t: Term, i: Int): Int = ((t >> i*4) & 15L).toInt
 @inline
 def isZero(t: Term): Boolean = t == 0L
 
-@inline
-def termToString(t: Term): String = {
-  var i = 0
-  var s = ""
-  while (i < 16) {
-    val exp = getExp(t, i) 
-    if (exp != 0) {
-      if (s != "") s += "*"
-      s += "x" + i
-      if (exp > 1)
-        s += "^" + exp
-    }
-    i += 1
-  }
-  return s
-}
-
 // WARNING: No check that varnames has enough names to describe the term!!
 @inline
 def termToString(t: Term, varnames: Array[String]): String = {
@@ -841,24 +851,29 @@ def termToString(t: Term, varnames: Array[String]): String = {
     }
     i += 1
   }
-  return s  
+  s  
 }
 
 @inline
-def termToLatex(t: Term): String = {
+def termToString(t: Term): String = termToString(t, Array.tabulate[String](16)(n => "z" + (n+1)))
+
+@inline
+def termToLatex(t: Term, varnames: Array[String]): String = {
   var i = 0
   var s = ""
   while (i < 16) {
     val exp = getExp(t, i)
     if (exp != 0L) {
-      s += "x_{" + i + "}"
+      s += varnames(i) + "_{" + i + "}"
       if (exp > 1)
         s += "^{" + exp + "}"
     }
     i += 1
   }
-  return s
+  s
 }
 
+@inline
+def termToLatex(t: Term): String = termToLatex(t, Array.tabulate[String](16)(n => "z" + (n+1)))
 
 }
