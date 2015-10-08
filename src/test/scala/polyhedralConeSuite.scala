@@ -39,11 +39,11 @@ class polyhedralConeSuite extends UnitSpec {
     
     rs1 should contain allOf (Vector(1, 1), Vector(-1, -1))
     rs1.size should be > 2
-    all (rs1.map(v => v(0) - v(1))) should be >= 0
+    all (rs1.map(v => if(v.size >= 2) v(0) - v(1) else 0)) should be >= 0
     
     rs2 should contain allOf (Vector(1, 1), Vector(-1, -1))
     rs2.size should be > 2
-    all (rs2.map(v => v(0) - v(1))) should be >= 0
+    all (rs2.map(v => if(v.size >= 2) v(0) - v(1) else 0)) should be >= 0
   }
   
   it should "calculate edges of a cone with lower dim than ambient space." in {

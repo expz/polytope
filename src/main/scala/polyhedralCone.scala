@@ -25,7 +25,10 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
             else 0
   
   try {
-    System.loadLibrary("gmp")
+    //System.load("/home/user/src/polytope/lib/libgmp.so")
+    //System.load("/home/user/src/polytope/lib/libppl.so")
+    //System.load("/home/user/src/polytope/lib/libppl_java.so")
+    //System.loadLibrary("gmp")
     System.loadLibrary("ppl")
     System.loadLibrary("ppl_java")
   } catch {
@@ -54,7 +57,7 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
    */
   def edges(): (Array[Edge], Array[Edge]) = {
     // The library must be initialized and later finalized
-    //Parma_Polyhedra_Library.initialize_library()
+    Parma_Polyhedra_Library.initialize_library()
     
     val cs = new Constraint_System()
     val vars = (
@@ -71,8 +74,8 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
       coeffs.foldLeft[(Linear_Expression, Int)]((zero, 0))(
         (keyVal, c) => (new Linear_Expression_Sum(keyVal._1, 
                           new Linear_Expression_Times(
-                            vars(keyVal._2),
-                            new parma_polyhedra_library.Coefficient(c)
+                            new parma_polyhedra_library.Coefficient(c),
+                            vars(keyVal._2)
                             )), 
                          keyVal._2 + 1)
        )._1
@@ -123,6 +126,7 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
     val ps = points.map(new Edge(_))
     
     // Now we can free the Polyhedron and finalize the library
+    Parma_Polyhedra_Library.finalize_library()
     myPoly.free()
     
     // But we saved the edges so return them
