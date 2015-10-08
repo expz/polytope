@@ -1,8 +1,17 @@
 import scala.collection.immutable.HashMap
 
+javaOptions := Seq(
+  "-Djava.library.path=" + 
+    System.getProperty("java.library.path") + java.io.File.pathSeparator +
+    nativeLibsPath,
+  "-Dfile.encoding=UTF-8"
+)
+fork := true
+
 lazy val commonSettings = Seq(
   version := "0.9.0",
   scalaVersion := "2.11.7"
+  scalacOptions ++= Seq("-feature")
 )
 
 // Calculate OS and architecture
@@ -68,18 +77,6 @@ lazy val root = Project(
       val baseDirectories = (base / "lib") +++ (base / nativeLibsPath)
       val customJars = (baseDirectories ** "*.jar")
       customJars.classpath
-    }/*
-    javaOptions in Compile ++= Seq(
-      "-Djava.library.path=" + 
-        System.getProperty("java.library.path") + java.io.File.pathSeparator +
-        nativeLibsPath,
-      "-Dfile.encoding=UTF-8"
-    ),
-    javaOptions in Test ++= Seq(
-      "-Djava.library.path=" + 
-        System.getProperty("java.library.path") + java.io.File.pathSeparator +
-        nativeLibsPath,
-      "-Dfile.encoding=UTF-8"
-    )*/
+    }
   )
 )
