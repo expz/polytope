@@ -2,3 +2,4 @@ bin/
 tmp/
 target/
 .pdf
+.worksheet
