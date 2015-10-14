@@ -28,7 +28,8 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
     //System.load("/home/user/src/polytope/lib/libgmp.so")
     //System.load("/home/user/src/polytope/lib/libppl.so")
     //System.load("/home/user/src/polytope/lib/libppl_java.so")
-    //System.loadLibrary("gmp")
+    System.loadLibrary("gmpxx")
+    System.loadLibrary("gmp")
     System.loadLibrary("ppl")
     System.loadLibrary("ppl_java")
   } catch {
