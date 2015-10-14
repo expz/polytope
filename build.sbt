@@ -10,8 +10,8 @@ fork := true
 
 lazy val commonSettings = Seq(
   version := "0.9.0",
-  scalaVersion := "2.11.7"
-  scalacOptions ++= Seq("-feature")
+  scalaVersion := "2.11.7",
+  scalacOptions ++= Seq("-deprecation", "-feature")
 )
 
 // Calculate OS and architecture
