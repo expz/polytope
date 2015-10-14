@@ -13,6 +13,7 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
+import scala.language.reflectiveCalls
 
 // Scallop library for command line parsing
 import org.rogach.scallop._
