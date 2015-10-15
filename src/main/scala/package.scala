@@ -33,7 +33,6 @@ type Permutation = Array[Int]
 
 
 def main(args: Array[String]) {
-  assert(true == false)
   val versionOutput = versionString + "\n" +
     "Copyright (C) 2014 ETH Zürich\n" +
     "License Simplified BSD Style <http://intra.csb.ethz.ch/tools/LICENSE.txt>\n" +
