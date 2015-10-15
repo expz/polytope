@@ -39,9 +39,7 @@ def main(args: Array[String]) {
     "License Simplified BSD Style <http://intra.csb.ethz.ch/tools/LICENSE.txt>\n" +
     "This is free software: you are free to change and redistribute it.\n" +
     "There is NO WARRANTY or GUARANTEE OF FITNESS FOR A PARTICULAR PURPOSE,\n" +
-    "to the extent permitted by law.\n" +
-    "\n" +
-    "Written by Jonathan Skowera."
+    "to the extent permitted by law.\n"
   try {
     object Conf extends ScallopConf(args.toList) {
       banner(
