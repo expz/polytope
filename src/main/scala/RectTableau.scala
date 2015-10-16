@@ -259,6 +259,11 @@ object RectTableau {
   }
   def stringToMatrix(str: String): Array[Array[Int]] = matrixParser(str)
   
+  /**
+   * Algorithm based loosely on the Python source code of the 
+   * Sage library freely available under the GPLv3 license from 
+   *   http://www.sagemath.org
+   */
   def standardTableaux(rows: Int, cols: Int): ListBuffer[RectTableau] = {
     /*
      * [[1, 3],
