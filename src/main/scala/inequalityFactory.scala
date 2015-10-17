@@ -50,6 +50,11 @@ object InequalityFactory {
     return es
   }
 
+  /**
+    * Returns a set of extremal edges of a list of cubicles.
+    *
+    * @param cubicles A ListBuffer of tableaux defining cubicles.
+    */
   def edgesDM(cubicles: ListBuffer[RectTableau]): HashSet[ABEdge] = {
     val es = HashSet[ABEdge]()
     if (!cubicles.isEmpty) {
@@ -62,7 +67,14 @@ object InequalityFactory {
     }
     return es
   }
-    
+  
+  /**
+    * Return the number of potential inequalities for bipartite pure states for
+    * distinguishable particles.
+    *
+    * @param edges An iterable collection of edges of cubicles.
+    * @param dims A List of dimensions.
+    */
   def potentialInequalitiesDP(edges: Iterable[ABEdge], dims: List[Int]): Int = {
     val ineqs = HashSet[List[Int]]()
     if (!dims.isEmpty) {
@@ -234,8 +246,8 @@ object InequalityFactory {
   }
 
   def ineqsDP(dims: List[Int]): HashSet[InequalityDP] = {
-    // Calculate constant arising from changing trace from 0 to dimension
     /*
+    // Calculate constant arising from changing trace from 0 to dimension
     def renorm(coeffs: Array[Int], dims: List[Int]): Array[Int] = {
       def gcd(a: Int, b: Int): Int = if (b == 0) a.abs else gcd(b, a%b)
       def lcm(a: Int, b: Int) = (a*b).abs/gcd(a,b)      
@@ -280,6 +292,10 @@ object InequalityFactory {
         ineq.const))    
   }
   
+  /**
+    * Returns a coefficient c^w_{uv}(T) as defined by Klyachko. In general
+    * it is a polynomial with integer coefficients.
+    */
   def c(u: Permutation, v: Permutation, 
         w: Permutation, T: RectTableau): HashMap[Long, Int] = 
   {
@@ -300,6 +316,13 @@ object InequalityFactory {
 }
 
 // coeffs*vars >= c
+/** Represents an inequality of the form:
+  * 
+  *   sum_i coeffs(i)*l(i) >= const
+  *
+  * @param coeffs An Array of coefficients.
+  * @param const A constant on the right hand side of the inequality.
+  */
 class Inequality(val coeffs: Array[Int], val const: Int = 0) {
   override def hashCode() = (coeffs.deep, const).hashCode()
   
@@ -311,15 +334,27 @@ class Inequality(val coeffs: Array[Int], val const: Int = 0) {
   def toArray(): Array[Int] = coeffs
 }
 
-// coeffs*vars >= c
+/**
+  * Represents a marginal inequality satisfied by eigenvalues of partial traces
+  * of particles with finitely many degrees of freedom listed in dims.
+  * 
+  *     coeffs(i)*l(i) >= const
+  *
+  * @param coeffs An array of coefficients of the inequality.
+  * @param dims A list of dimensions.
+  * @param const A constant on the right hand side of the inequality.
+  */
 class MarginalInequality(coeffs: Array[Int], val dims: List[Int], const: Int)
   extends Inequality(coeffs, const) {
-  
+ 
+  /** Returns an Array of the names of the variables in this inequality */
   def varnames = 
     Array.tabulate[String](dims.length)(i => ('a' + i).toChar.toString)
 
+  /** Returns an Array of the names of the variables of this inequality in LaTeX */
   def latexVarnames = varnames
   
+  /** Returns the CSV headers corresponding to the output of toCSV() */
   def csvHeaders(): String = {
     val str = new StringBuilder("")
     var varnum = 0
@@ -332,8 +367,10 @@ class MarginalInequality(coeffs: Array[Int], val dims: List[Int], const: Int)
     return str.result
   }
   
+  /** Returns the coefficients and constant of this inequality as a CSV row */
   def toCSV(): String = coeffs.mkString(",") + "," + const
-    
+   
+  /** Returns this inequality written in LaTeX. */
   def toLatex(): String = { 
     def format(coeff: Int, term: String): String = {
       if (coeff == 0) ""
@@ -371,6 +408,24 @@ class MarginalInequality(coeffs: Array[Int], val dims: List[Int], const: Int)
   }  
 }
 
+/**
+  * Represents an inequality satisfied by distinguishable, pure states.
+  *
+  * @constructor Create an inequality with coefficients `coeffs` satisfied by
+  *   pure states of a system of distinguishable particles with `dims` degrees
+  *   of freedom and offset `const`:
+  *
+  *     a(1) l^A_u(1) + .. + b(1) l^B_v(1) + .. + ab(1) l^{ab}_w(1) >= c
+  *
+  *   where `c = const` and `a(i) = const(i-1)`, `b(j) = const(dims(0)+j-1)` and
+  *   `ab(k) = const(dims(0)+dims(1)+k-1)`.
+  * @param coeffs Array of coefficients of the inequality. Its length must be:
+  *
+  *   coeffs.length = dims(0) + dims(1) + dims(0)*dims(1)
+  *
+  * @param dims List of dimensions of component systems.
+  * @param const Offset of inequality.
+  */
 class InequalityDP(coeffs: Array[Int], dims: List[Int], const: Int = 0)
   extends MarginalInequality(coeffs, dims, const) {
   
@@ -381,9 +436,37 @@ class InequalityDP(coeffs: Array[Int], dims: List[Int], const: Int = 0)
     i => "\\lambda^" + ('A' + i).toChar)
 }
 
-// a_1 l^A_u(1) + .. + b(1) l^B_v(1) + .. + ab(1) l^{ab}_w(1) >= 0 
+/**
+  * Represents an inequality satisfied by bipartite mixed states for
+  * distinguishable particles.
+  *
+  * @constructor Create an inequality with coefficients `coeffs` satisfied by
+  *   mixed states of a system of distinguishable particles with `dims` degrees
+  *   of freedom and offset `const`:
+  *
+  *     a(1) l^A_u(1) + .. + b(1) l^B_v(1) + .. + ab(1) l^{ab}_w(1) >= c
+  *
+  *   where `c = const` and `a(i) = const(i-1)`, `b(j) = const(dims(0)+j-1)` and
+  *   `ab(k) = const(dims(0)+dims(1)+k-1)`.
+  * @param coeffs Array of coefficients of the inequality. Its length must be:
+  *
+  *   coeffs.length = dims(0) + dims(1) + dims(0)*dims(1)
+  *
+  * @param dims List of dimensions of component systems.
+  * @param const Offset of inequality.
+  */
 class InequalityDM(coeffs: Array[Int], dims: List[Int], const: Int = 0) 
   extends MarginalInequality(coeffs, dims, const) {
+  /**
+    * Creates an inequality from three permutations and a vector in a cubicle.
+    *
+    * @param u A permutation.
+    * @param v A permutation.
+    * @param w A permutation on m*n elements where u and v are permutations on
+    *   m and n elements respectively.
+    * @param e A vector of length m + n + m*n where u and v are permutations
+    *   on m and n elements respectively.
+    */
   def this(u: Permutation, v: Permutation, w: Permutation, e: ABEdge) = 
     this(act(inverse(u), e.A).map(-_) ++
          act(inverse(v), e.B).map(-_) ++ 
@@ -415,7 +498,7 @@ class InequalityDM(coeffs: Array[Int], dims: List[Int], const: Int = 0)
     coeffs.dropRight(dimB + dimAB).map(-_) ++ 
     coeffs.drop(dimA).dropRight(dimAB).map(-_) ++
     coeffs.drop(dimA + dimB)
-    
+   
   override def csvHeaders(): String = {
     val str = new StringBuilder("")
     var varnum = 0
@@ -428,14 +511,17 @@ class InequalityDM(coeffs: Array[Int], dims: List[Int], const: Int = 0)
     str ++= ",const"
     return str.result
   }    
-    
+   
   override def toCSV(): String = stdFormCoeffs.mkString(",") + "," + const
-  
+ 
+  /** Returns a string with a dump of the parameters of this class. */
   override def toString(): String = 
     "Inequality(dimA = " + dimA + 
     ", dimB = " + dimB + 
-    ", coeffs = (" + stdFormCoeffs.mkString(", ") + "))"
+    ", coeffs = (" + stdFormCoeffs.mkString(", ") + 
+    ", const = (" + const + "))"
   
+  /** Returns this inequality as a string of LaTeX. */
   override def toLatex(): String = { 
     def format(coeff: Int, term: String): String = {
       if (coeff == 0) ""
