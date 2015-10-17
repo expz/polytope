@@ -1,25 +1,29 @@
 package polytope
 
+/**
+  * An object providing basic arithmetic functions lacking in the Scala
+  * standard library.
+  */
 object Arithmetic {
   
+  /** Returns the greatest common divisor of a and b */
   def gcd(a: Int, b: Int): Int = if (b == 0) a.abs else gcd(b, a % b)
   
+  /** Returns the greatest common divisor of a list of integers */
   def gcd(as: List[Int]): Int = if (as.length > 0) 
                                   as.fold(as.head)((k, g) => gcd(k, g))
                                 else
                                   1
-  
+  /** Returns the least common multiple of a and b */
   def lcm(a: Int, b: Int): Int = (a * b).abs / gcd(a, b)
   
+  /** Returns the least common multiple of a list of integers */
   def lcm(as: List[Int]): Int = if (as.length > 0)
                                   as.fold(as.head)((k, l) => lcm(k, l))
                                 else
                                   1
   
-  /*
-   * Calculate the binomial coefficient n Choose k
-   * 
-   */
+  /** Return the binomial coefficient n Choose k */
   def binomial(n: Int, k: Int): Int = {
     var r = 1
     var d = n - k
