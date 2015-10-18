@@ -14,7 +14,7 @@ doing Mixed Integer Programming (MIP).
 
 ### LICENSE
 
-I would release it under MIT, but I distribute it to work out of the box using a GPL library (Parma), so it is GPL.
+This software calls third-party software libraries licensed under the GPL. This software is licensed under the GPLv3.
 
 ### QUICKSTART USAGE
 
