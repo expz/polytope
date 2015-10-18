@@ -21,21 +21,34 @@ import org.rogach.scallop.exceptions._
 
 import scala.io._
 
+/** Represents the term of a polynomial. */
 type Term = Long
+
+/**
+  * Represents a polynomial such that:
+  *
+  * 1. It has at most 15 variables.
+  * 2. Each variable is raised to at most the 15th power.
+  * 3. All coefficients are positive integers between 1 and 15 inclusive.
+  *
+  */
 type Polynomial = ArrayBuffer[Long]
 
-/*
- * Permutation type
- *   !!!Permutations are not checked for correctness
- *   Includes a function for acting on an array
- */
+/**
+  * Represents a permutation.
+  *
+  * __Permutations are not checked for correctness for the sake of speed.__
+  *
+  */
 type Permutation = Array[Int]
 
-
+/**
+  * The main loop. This processes the command line arguments and calls the
+  * necessary functions. Output is directed to the standard out.
+  */
 def main(args: Array[String]) {
   val versionOutput = versionString + "\n" +
-    "Copyright (C) 2014 ETH Zürich\n" +
-    "License Simplified BSD Style <http://intra.csb.ethz.ch/tools/LICENSE.txt>\n" +
+    "Licensed under the GPLv3 License <https://www.gnu.org/licenses/gpl-3.0.txt>.\n" +
     "This is free software: you are free to change and redistribute it.\n" +
     "There is NO WARRANTY or GUARANTEE OF FITNESS FOR A PARTICULAR PURPOSE,\n" +
     "to the extent permitted by law.\n"
@@ -118,9 +131,9 @@ def main(args: Array[String]) {
                           { case None => false; case _ => true }
     
     Conf.subcommand match {
-    /**************************************
-     * Calculate a mixed polytope
-     */
+    
+    /////////////////////////////////////////////////////
+    // Calculate a mixed polytope
     case Some(Conf.mixed) => {
       val dims = if (Conf.mixed.dims().length == 1) 
                    List(Conf.mixed.dims()(0), 0) 
@@ -336,9 +349,8 @@ def main(args: Array[String]) {
       }
     }
     
-    /**********************************************
-     * Calculate a pure polytope
-     */
+    ////////////////////////////////////////////////
+    // Calculate a pure polytope
     case Some(Conf.pure) => {
       val dims = if (Conf.pure.dims().length == 1) 
            List(Conf.pure.dims()(0), 0)
@@ -456,9 +468,8 @@ def main(args: Array[String]) {
       }
     }
     
-    /**********************************
-     * Catch all
-     */
+    ////////////////////////////////////////////
+    // Catch all
     case _ => Conf.builder.printHelp
     
     }
@@ -470,9 +481,22 @@ def main(args: Array[String]) {
   }
 }
 
+/** 
+  * Returns the inverse of a given permutation.
+  *
+  * @param p The permutation of which to take an inverse.
+  * @returns The inverse of p.
+  */
 def inverse(p: Permutation): Permutation 
             = Array.tabulate[Int](p.length)(n => p.indexWhere(_ == n+1) + 1)
 
+/**
+  * Returns an array permuted by a given permutation.
+  *
+  * @param p The permutation to apply.
+  * @param a The array to permute.
+  * @returns The array a permuted by the permutation p.
+  */
 def act[A](p: Permutation, a: Array[A])(implicit tag: ClassTag[A]): Array[A] = {
   assert(a.length >= p.length)
   val pa = ArrayBuffer[A]()
@@ -484,13 +508,15 @@ def act[A](p: Permutation, a: Array[A])(implicit tag: ClassTag[A]): Array[A] = {
   pa.toArray[A]
 }
 
-/*
- * toLehmerCode() -- Returns the Lehmer code of the permutation.
- *
- *                    The Lehmer code of the permutation p is
- *                      (c(1), c(2), ..., c(n))
- *                    where c(i) = |{ j > i | p(j) < p(i) }|
- */
+/**
+  * Returns the Lehmer code of the permutation.
+  *
+  * The Lehmer code of the permutation p is
+  *
+  *   (c(1), c(2), ..., c(n))
+  *
+  * where c(i) = |{ j > i | p(j) < p(i) }|.
+  */
 def toLehmerCode(p: Permutation): ArrayBuffer[Int] = {
   // A routine to sum an ArrayBuffer faster than a foreach( sum += _ )
   var i = 0
@@ -515,15 +541,19 @@ def toLehmerCode(p: Permutation): ArrayBuffer[Int] = {
   code
 }
 
-/*
- * reducedWord() -- Decompose a permutation into a minimal length product of
- *                  transpositions.
- */
+/**
+  * Returns the decomposition of a permutation into a minimal length product 
+  * of transpositions.
+  *
+  * @param p The permutation to decompose.
+  * @returns An array a
+  */
 def reducedWord(p: Permutation): Array[Int] = {
   val code = toLehmerCode(p)
   for (i <- Array.range(0, code.length); j <- Array.range(0, code(i))) yield i+code(i)-j
 }
 
+/** Returns true if f is a constant integer, otherwise false. */
 def isInteger(f: Polynomial): Boolean = {
   if (f.isEmpty) return true
   var i = 0
@@ -534,6 +564,10 @@ def isInteger(f: Polynomial): Boolean = {
   true
 }
 
+/**
+  * Returns true if the polynomial represented by the HashMap is a constant
+  * integer, otherwise false.
+  */
 def isInteger(f: HashMap[Long, Int]): Boolean = {
   if (f.isEmpty) return true
   var i = 0
@@ -541,17 +575,25 @@ def isInteger(f: HashMap[Long, Int]): Boolean = {
   true
 }
 
+/**
+  * Returns true if the polynomial represented by the HashMap is zero,
+  * otherwise false.
+  */
 def isZero(f: HashMap[Long, Int]): Boolean = {
   if (f.isEmpty) return true
   f.foreach( keyVal => if (keyVal._2 != 0) return false)
   true
 }
 
-/*
- * subst() -- Substitute x_i + y_j for z_T(i,j) where T is a rectangular tableau
- * 
- *            NOTE: Changes the polynomial in place
- */
+/**
+  * Returns the polynomial f after substituting,
+  *
+  *   z_T(i,j) --> x_i + y_j,
+  *
+  * where T is a rectangular tableau.
+  * 
+  * WARNING: The HashMap is mutable and this changes the polynomial in place.
+  */
 def subst(f: HashMap[Long, Int], T: RectTableau): HashMap[Long, Int] = {
   assert(T.rows*T.cols > 0 && T.rows*T.cols <= 16)
   val substF = HashMap[Long, Int]()
@@ -574,9 +616,9 @@ def subst(f: HashMap[Long, Int], T: RectTableau): HashMap[Long, Int] = {
   substF
 }
 
-/*
- * addInPlace() -- Adds g to f and places the result in f
- */
+/**
+  * Adds the polynomial g to f and places the result in f.
+  */
 def addInPlace(f: HashMap[Long, Int], g: HashMap[Long, Int]) = {
   for (term <- g.keys) {
     f(term) = f.getOrElse(term, 0) + g(term)
@@ -616,12 +658,12 @@ def binomialExpansion(firstvar: Int, secondvar: Int, exp: Int): HashMap[Long, In
 }
 
 
-/*
- * delta() -- The multiple divided difference del_u(f) acting on the sequence 
- *            of variables starting with variable number offset.
- *            
- *            NOTE: Changes the polynomial in place.
- */
+/**
+  * The multiple divided difference del_u(f) acting on the sequence of 
+  * variables starting with variable number offset.
+  *            
+  * NOTE: Changes the polynomial in place.
+  */
 def delta(u: Permutation, hm: HashMap[Long, Int], offset: Int)
     : HashMap[Long, Int] = {
   assert(offset >= 0)
