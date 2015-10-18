@@ -14,6 +14,14 @@ import com.google.ortools.linearsolver.MPVariable
 
 import java.util.UUID
 
+/**
+  * Represents a rectangular tableau with `rows` rows and `cols` columns.
+  *
+  * @constructor Returns a new rectangular tableau.
+  * @param rows The number of rows of the rectangular tableau.
+  * @param cols The number of columns of the rectangular tableau.
+  * @param rowOfLabel
+  */
 class RectTableau(val rows: Int, 
                   val cols: Int, 
                   val rowOfLabel: ArrayBuffer[Int]) {
@@ -25,19 +33,22 @@ class RectTableau(val rows: Int,
   
   // Load library for doing MIP to check admissibility
   System.loadLibrary("jniortools")
-    
+  
+  /** 
+    * The representation of this rectangular tableau as a matrix whose entries
+    * are the numbers between 1 and `rows`*`cols`.
+    */
   val matrixForm = new ArrayBuffer[ArrayBuffer[Int]]()
   
-  /*
-   * getRow() -- Return the row containing the cell labeled by n.
-   */
+  /**
+    * Return the row containing the cell labeled by n.
+    */
   def getRowOf(n: Int) = rowOfLabel(n-1)
   
-  /*
-   * @param k Label of cell of tableau
-   * 
-   * @result  Row and column in which the cell labeled by k lies
-   */
+  /**
+    * @param k Label of cell of tableau
+    * @result  Row and column in which the cell labeled by k lies
+    */
   def apply(k: Int) = {
     val row = rowOfLabel(k)
     var col = 1
@@ -63,7 +74,9 @@ class RectTableau(val rows: Int,
     matrixForm
   }
   
-  // Mixed states of distinguishable particles
+  /** Returns the cone of mixed states of distinguishable particles associated
+    * to this tableau.
+    */
   def toCone = {
     // Initialize the cone to the trace=lcm(dims) slice of the pos Weyl chamber
     val P = PolyhedralCone.positiveWeylChamberDM(List(rows, cols))
@@ -260,10 +273,13 @@ object RectTableau {
   def stringToMatrix(str: String): Array[Array[Int]] = matrixParser(str)
   
   /**
-   * Algorithm based loosely on the Python source code of the 
-   * Sage library freely available under the GPLv3 license from 
-   *   http://www.sagemath.org
-   */
+    * Returns a ListBuffer of all rectangular, standard tableaux of dimension
+    * `rows` by `cols`.
+    *
+    * Algorithm written in consultation with the Python source code of the Sage 
+    * library freely available under the GPLv3 license from 
+    *   http://www.sagemath.org.
+    */
   def standardTableaux(rows: Int, cols: Int): ListBuffer[RectTableau] = {
     /*
      * [[1, 3],

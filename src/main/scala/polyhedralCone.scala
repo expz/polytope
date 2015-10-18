@@ -8,26 +8,28 @@ import scala.util.Sorting
 
 import parma_polyhedra_library._
 
-/*
- * PolyhedralCone
- * 
- * ieqs are >= 0
- * 
- * WARNING: the lengths of the arrays in eqs and ieqs must be equal, but there
- *  is no check. Otherwise, an error can be thrown when calling edges(). 
- */
+/**
+  * Represents a polyhedral cone given by equations and inequalities.
+  * 
+  * @constructor Returns a polyhedral cone defined by equations, `eqs`, and 
+  *   inequalities, `ieqs`.
+  * @param eqs An array of equations defining the cone.
+  * @param ieqs An array of inequalities defining the cone.
+  * 
+  * WARNING: the lengths of the arrays in eqs and ieqs must be equal, but there
+  * is no check. Otherwise, an error can be thrown when calling edges(). 
+  */
 class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {  
   // Check that eqs and ineqs all have the same number of coefficients
   assert((eqs ++ ieqs).map(_.length).distinct.length <= 1)
-  
+ 
+  /** The dimension of the ambient space of the polyhedral cone. */
   val dim: Int = if (eqs.length > 1) (eqs(0).length - 1)
             else if (ieqs.length > 1) (ieqs(0).length - 1)
             else 0
-  
+
+  // Load native libraries
   try {
-    //System.load("/home/user/src/polytope/lib/libgmp.so")
-    //System.load("/home/user/src/polytope/lib/libppl.so")
-    //System.load("/home/user/src/polytope/lib/libppl_java.so")
     System.loadLibrary("gmpxx")
     System.loadLibrary("gmp")
     System.loadLibrary("ppl")
@@ -40,6 +42,12 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
     }
   }
   
+  /**
+    * Returns the intersection of this polyhedral cone with a given cone.
+    *
+    * @param P2 A polyhedral cone to intersect.
+    * @returns The intersection of `P2` with this cone.
+    */
   def intersection(P2: PolyhedralCone): PolyhedralCone = {
     val eqsToAdd = 
       if (eqs.deep == Array(Array(0)).deep) Array[Array[Int]]() else eqs
@@ -53,9 +61,11 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
     return new PolyhedralCone(eqsToAdd ++ P2eqsToAdd, ieqsToAdd ++ P2ieqsToAdd)
   }
   
-  /*
-   *  Calculates the edges anew every time it is called
-   */
+  /**
+    * Returns the extremal edges of this polyhedral cone.
+    *
+    * NOTE: Calculates the edges anew every time it is called.
+    */
   def edges(): (Array[Edge], Array[Edge]) = {
     // The library must be initialized and later finalized
     Parma_Polyhedra_Library.initialize_library()
@@ -148,6 +158,9 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
     ieqs.map(a => "(" + a.mkString(", ") + ")").mkString("\n")
 }
 
+/**
+  * Companion object of the class `PolyhedralCone`.
+  */
 object PolyhedralCone {  
   def apply(eqs: Array[Array[Int]], ieqs: Array[Array[Int]]): PolyhedralCone = 
       new PolyhedralCone(eqs, ieqs)
@@ -165,8 +178,9 @@ object PolyhedralCone {
   
   def positiveWeylChamberDM(dims: List[Int]): PolyhedralCone = 
     positiveWeylChamberDP(dims)
+
   /**
-    * Return the positive Weyl chamber for the numChamberVars starting at 
+    * Returns the positive Weyl chamber for the numChamberVars starting at 
     * firstChamberVar in a total space of numTotalVars
     * 
     * @param dims dimensions of subspace                       
@@ -217,13 +231,25 @@ object PolyhedralCone {
   }
 }
 
+/**
+  * Represents a rational edge of a polyhedral cone.
+  *
+  * @constructor Returns a new edge based at the origin passing through the 
+  * point `edge`.
+  * @param edge An point with integral coordinates defining the edge.
+  */
 class Edge(val edge: Array[Int]) {
-  /*
-   * mult(v) -- Given (v(0), ..., v(n-1)) returns (c(0), ..., c(k))
-   *            where c(0) is the number of consecutive entries equal to v(0),
-   *            c(1) is the number of consecutive entries equal to next distinct
-   *            element, etc. 
-   */
+  /**
+    * Returns `(c(0), ..., c(k))` where 
+    *
+    *   c(0) = the number of consecutive entries equal to v(0),
+    *   c(1) = the number of consecutive entries equal to the next distinct 
+    *          element of v,
+    *   ...
+    *
+    * @param v An array of integers.
+    * @returns The consecutive multiplicities of `v`.
+    */
   protected def mult(v: Array[Int]): Array[Int] = {
     val m = ArrayBuffer[Int]()
     if (v.length == 0) return m.toArray
@@ -249,11 +275,20 @@ class Edge(val edge: Array[Int]) {
   override def toString(): String = "(" + edge.mkString(", ") + ")"
 }
 
-
+/**
+  * Represents a rational edge of a polyhedral cone embedded in a bipartite
+  * tensor product.
+  *
+  * @param edge A point with integral coordinates defining the edge.
+  * @param dimA The dimension of the first factor of the tensor product.
+  */
 class ABEdge(edge: Array[Int], val dimA: Int) extends Edge(edge) {
   assert(dimA <= edge.length)
   
+  /** The dimension of the second factor of the tensor product. */
   def dimB: Int = edge.length - dimA
+
+  /** The dimension of the tensor product (ambient space of this edge). */
   def dimAB: Int = dimA*dimB
   
   val A = edge.take(dimA).sorted(Ordering.Int.reverse)  // Decreasing order
@@ -267,13 +302,14 @@ class ABEdge(edge: Array[Int], val dimA: Int) extends Edge(edge) {
   
   override def hashCode() = this.A.deep.hashCode() + this.B.deep.hashCode()
   
-  // Return a(i) + b(j) in decreasing order
+  /** Returns a(i) + b(j) in decreasing order */
   def AB: Array[Int] = {
     val ab = Array.tabulate[Int](dimA*dimB)(n => A(n%dimA) + B(n/dimA))
     scala.util.Sorting.quickSort(ab)
     return ab.reverse
   } 
-      
+  
+  /**  */
   def ABTriples(): Array[(Int,Int,Int)] = {
     val ab = Array.tabulate[(Int, Int, Int)](dimA*dimB)(
                  n => (n%dimA, n/dimA, A(n%dimA)+ B(n/dimA)))

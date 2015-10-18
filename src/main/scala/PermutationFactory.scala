@@ -3,25 +3,39 @@ package polytope
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
+/**
+  * Contains algorithms for generating various types of permutation such
+  * as shuffles and shuffle products.
+  */
 object PermutationFactory {
   /** Returns ArrayBuffer of all permutations on n letters
     *  
-    * @param n size of permutations
+    * @param n The size (number of elements) of the permutations.
     * @returns All permutations on n letters
     */
   def permutationsOfSize(n: Int): ArrayBuffer[Permutation] = 
         ArrayBuffer[Permutation]() ++ Array.tabulate[Int](n)(_+1).permutations
  
+  /** Returns the shiffted shuffle product of two permutations.
+    *
+    * @param w1 A permutation.
+    * @param w2 A permutation.
+    * @returns The shifted shuffle product of `w1` and `w2`.
+    */
   def shiftedShuffleProduct(w1: Permutation, w2: Permutation): 
         ArrayBuffer[Permutation] = {
     distinctShuffleProduct((w1 ++ w2.map(k => k + w1.length)).to[ArrayBuffer], 
                            w1.length)
   }
   
-  /*
-   * distinctShuffleProduct  Shuffles product of two permutations, all of whose
-   *                         labels are unique
-   */
+  /**
+    * Returns the shuffle product of two permutations, all of whose labels are
+    * unique.
+    *
+    * @param seq
+    * @param left
+    * @returns
+    */
   def distinctShuffleProduct[A](seq: ArrayBuffer[A], left: Int)
     (implicit T: ClassTag[A]): ArrayBuffer[Array[A]] = {
     val ab = ArrayBuffer[Array[A]](seq.toArray[A])
@@ -39,7 +53,13 @@ object PermutationFactory {
     }
     return ab
   }
-  
+
+  /**
+    * Returns an ArrayBuffer of all shuffles with given multiplicities.
+    *
+    * @param mults
+    * @returns
+    */
   def shuffles(mults: Array[Int]): ArrayBuffer[Permutation] = {
     val S2 = ArrayBuffer[Permutation]()
     if (mults.length == 0) return S2
@@ -66,7 +86,15 @@ object PermutationFactory {
     if (odd) return S2
     else return S1
   }
-  
+ 
+  /**
+    * Returns all shuffls of a given length.
+    *
+    * @param mults
+    * @param numInversions
+    * @returns All permutations with multiplicities `mults` with exactly
+    *   `numInversions` inversions.
+    */
   def shufflesOfGivenLength(mults: Array[Int], numInversions: Int): 
         ArrayBuffer[Permutation] = {
     // Buffer to hold the generated shuffles
@@ -147,5 +175,4 @@ object PermutationFactory {
     // Return shuffles
     return perms
   }
-   
 }

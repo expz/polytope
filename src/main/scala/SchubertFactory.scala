@@ -9,8 +9,14 @@ import scala.collection.immutable.Vector
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
+/**
+  * Collection of algorithms for generating Schubert polynomials.
+  */
 object SchubertFactory {
   
+  /**
+    * Returns a permutation read from the standard input.
+    */
   def readPermutation(): Permutation = {
     println("Schubert Polynomial Calculator")
     println("Please enter the number of symbols: ")
@@ -21,9 +27,16 @@ object SchubertFactory {
     }} 
   }
   
-  // Makes no attempt to check that the Permutation is actually a Permutation
-  // i.e., that it contains every number 1..n exactly once
-  def schubertPolynomial(perm: Permutation): Polynomial = { 
+  /**
+    * Returns the Schubert polynomial associated with a given permutation.
+    * 
+    * Makes no attempt to check that the Permutation is actually a Permutation
+    * i.e., that it contains every number 1..n exactly once.
+    *
+    * @param perm The permutation.
+    * @returns The Schubert polynomial of `perm`.
+    */
+   def schubertPolynomial(perm: Permutation): Polynomial = { 
       if (isIdentity(perm)) return ArrayBuffer[Term](0L)
       
       val leadFactor: Term = 0L
@@ -31,10 +44,10 @@ object SchubertFactory {
   }
  
   /**
-   * Algorithm adapted from the C source code of the Symmetrica 
-   * library which is freely available from
-   *   http://www.algorithm.uni-bayreuth.de/en/research/SYMMETRICA/
-   */
+    * Algorithm adapted from the C source code of the Symmetrica 
+    * library which is freely available from
+    *   http://www.algorithm.uni-bayreuth.de/en/research/SYMMETRICA/
+    */
   def schubertAlgorithm(leadFactor: Term, index: Int, exponent: Int, 
                         perm: Permutation): Polynomial = {    
     // The code actually runs slower when you only define result when it's needed
