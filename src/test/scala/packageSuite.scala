@@ -42,7 +42,7 @@ class packageSuite extends UnitSpec {
     val lc3 = toLehmerCode(Array(1, 2, 3))
     val lc4 = toLehmerCode(Array(3, 1, 4, 2))
     
-    lc1.to[ArrayBuffer] should be (ArrayBuffer())
+    lc1.to[ArrayBuffer] should be (ArrayBuffer[Int]())
     lc2.to[ArrayBuffer] should be (ArrayBuffer(0))
     lc3.to[ArrayBuffer] should be (ArrayBuffer(0, 0, 0))
     lc4.to[ArrayBuffer] should be (ArrayBuffer(2, 0, 1, 0))

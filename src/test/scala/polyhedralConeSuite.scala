@@ -20,8 +20,8 @@ class polyhedralConeSuite extends UnitSpec {
     val pc1 = PolyhedralCone(Array(), Array())    
     val pc2 = PolyhedralCone(Array(Array[Int]()), Array(Array[Int]()))
 
-    pc1.edges() should be (ArrayBuffer()) //.map(_.edge).toArray[Array[Int]].deep should be (Array[Array[Int]]().deep)
-    pc2.edges() should be (ArrayBuffer()) //.map(_.edge).toArray[Array[Int]].deep should be (Array[Array[Int]]().deep)  
+    pc1.edges() should be (ArrayBuffer[Int]()) //.map(_.edge).toArray[Array[Int]].deep should be (Array[Array[Int]]().deep)
+    pc2.edges() should be (ArrayBuffer[Int]()) //.map(_.edge).toArray[Array[Int]].deep should be (Array[Array[Int]]().deep)  
   }
 
   it should "calculate edges of a half-space cone." in {
