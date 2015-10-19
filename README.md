@@ -14,42 +14,53 @@ doing Mixed Integer Programming (MIP).
 
 ### LICENSE
 
-This software calls third-party software libraries licensed under the GPL. This software is licensed under the GPLv3.
+This software calls third-party software libraries licensed under the GPL. 
+This software is licensed under the GPLv3.
 
 ### QUICKSTART USAGE
 
-1. Download the entire repository and unzip it.
+Compiling and running this program currently requires:
 
+* 64-bit linux (because of the ppl library)
+* sbt 0.13.9 (http://www.scala-sbt.org/download.html)
+* 7z (to extract native libs after downloading, try apt-get install p7zip-full)
+
+1. Download the entire repository and unzip it, or clone the repository using
+   ```
+   git clone https://github.com/expz/polytope.git
+   ```
 2. Open a console window and run the command:
    ```
-   $ ./polytope --help
+   sbt "run --help"
    ```
    This will display all the command line arguments. Also try computing inequalities and vertices of the polytope of pure 2x2x2 distinguishable states:
    ```
-   $ ./polytope pure -iv 2 2 2"
+   sbt "run pure -iv 2 2 2"
    ```
 
-### QUICKSTART DEVELOPMENT
+The library can be test using the command `sbt test`.
 
-1. Install Scala 2.11.7 and sbt 0.13.9
+### API Documentation
 
-2. Clone the entire repository onto a local machine.
+After downloading this repository, run
+```
+sbt doc
+```
+in its root directory. Then the api documentation will be accessible in 
+`target/scala-2.11/api`. From a web browser, navigate to
+```
+file:///path/to/project/dir/target/scala-2.11/api/index.html
+```
 
-3. Make changes to code
+### TO DO
 
-4. Run `sbt compile` to compile or `sbt test` to run tests.
-
-### REQUIREMENTS
-
-* Linux (amd64)
-* sbt
-
-For other platforms, the correct ppl and google-ortools libraries must be download and placed in `lib/` (TODO: Fix this).
+* Remove dependency on Linux (amd64) by finding a replacement for libppl
+* Add one-jar build target
+* Write script to run program directly from one-jar
 
 ### INCLUDED LIBRARIES
 
-All necessary libraries are included. As far as native libraries, the master 
-branch currently links to 64-bit Linux.
+All necessary libraries are automatically downloaded by `sbt`.
 
 __Libraries:__
 
@@ -68,7 +79,7 @@ __Libraries:__
    
 __Supporting Libraries:__
 
--- GNU Multiple Precision Arithmetic Library
+-- GNU Multiple Precision Arithmetic Library called by libppl
    (https://gmplib.org) (GPLv2 License)
 
 (A previous version used the COIN CBC Solver library (Eclise Public License 1.0) directly, but it is now included in the Google OR Tools.) 
