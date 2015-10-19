@@ -21,9 +21,11 @@ This software is licensed under the GPLv3.
 
 Compiling and running this program currently requires:
 
-* 64-bit linux (because of the ppl library)
-* sbt 0.13.9 (http://www.scala-sbt.org/download.html)
-* 7z (to extract native libs after downloading, try apt-get install p7zip-full)
+* _64-bit linux_: because of the ppl library (see below)
+* _sbt 0.13.9_: get it at http://www.scala-sbt.org/download.html
+* _7z_: used to extract native libs after downloading (ubuntu: p7zip-full)
+
+To test it out:
 
 1. Download the entire repository and unzip it, or clone the repository using
    ```
