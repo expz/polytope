@@ -47,7 +47,7 @@ class RectTableau(val rows: Int,
   
   /**
     * @param k Label of cell of tableau
-    * @result  Row and column in which the cell labeled by k lies
+    * @return  Row and column in which the cell labeled by k lies
     */
   def apply(k: Int) = {
     val row = rowOfLabel(k)
@@ -126,9 +126,9 @@ class RectTableau(val rows: Int,
               _.map(i => if (i < 10) " " + i else i.toString) mkString " " 
               ) mkString "\n"
   
-  /*
-   * isTrivial -- True if the tableau is labeled row-by-row sequentially 
-   */
+  /**
+    * Returns true if this tableau is labeled row-by-row sequentially. 
+    */
   def isTrivialTableau: Boolean = {
     if (rows*cols == 0) return true
     var i = 0
@@ -278,7 +278,7 @@ object RectTableau {
     *
     * Algorithm written in consultation with the Python source code of the Sage 
     * library freely available under the GPLv3 license from 
-    *   http://www.sagemath.org.
+    *   [[http://www.sagemath.org]].
     */
   def standardTableaux(rows: Int, cols: Int): ListBuffer[RectTableau] = {
     /*

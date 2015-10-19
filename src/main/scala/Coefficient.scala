@@ -4,16 +4,16 @@ package polytope
 trait Coefficient extends Any
 
 /**
-  * Represents a coefficient c^w_{uv}(T) appearing in the decomposition of
+  * Represents a coefficient `\(c^w_{uv}(T)\)` appearing in the decomposition of
   * the pull-back of Schubert cocyles,
-  *
+  * `$$
   * \phi_T(\sigma_w) = 
   *   \sum_{\ell(u) + \ell(v) = \ell(w)} c^w_{uv}(T) \sigma_u \otimes \sigma_v,
-  *
+  * $$`
   * by the morphism,
-  * 
+  * `$$
   * \phi^{*}_T : H^{*}(Fl(H_A \otimes H_B)) \to H^{*}(Fl(H_A) \times Fl(H_B)),
-  * 
+  * $$` 
   * from the cohomology of the complete flag variety of a bipartite tensor
   * product to the cohomology of the product of the complete flag varieties 
   * of the two tensor product components.
@@ -21,7 +21,7 @@ trait Coefficient extends Any
   * This is a value class: it's instatiation is factored out of the runtime
   * code, so it incurs no overhead. This feature requires Scala >= 2.10.
   *
-  * @constructor Create a new coefficient c^w_{uv}(T) with its value, 
+  * @constructor Create a new coefficient \(c^w_{uv}(T)\) with its value, 
   * associated cubicle, T, and associated permutations, u, v, and w.
   * @param self._1 The value of the coefficient. It will always be a positive
   *   integer. A non-zero value means its associated inequalities hold for
@@ -31,7 +31,7 @@ trait Coefficient extends Any
   * @param self._4 A list of three permutations, u, v, and w. If u and v are
   *   permutations on m and n elements respectively, then w is a permutation 
   *   on m*n elements.
-  * @see Klyachko's paper at http://arxiv.org/pdf/quant-ph/0409113v1.pdf
+  * @see Klyachko's paper at [[http://arxiv.org/pdf/quant-ph/0409113v1.pdf]]
   *
   */
 class PFCoefficient(val self: (Int, ABEdge, RectTableau, List[Permutation])) 

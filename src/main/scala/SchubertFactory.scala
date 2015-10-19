@@ -34,7 +34,7 @@ object SchubertFactory {
     * i.e., that it contains every number 1..n exactly once.
     *
     * @param perm The permutation.
-    * @returns The Schubert polynomial of `perm`.
+    * @return The Schubert polynomial of `perm`.
     */
    def schubertPolynomial(perm: Permutation): Polynomial = { 
       if (isIdentity(perm)) return ArrayBuffer[Term](0L)
@@ -46,7 +46,7 @@ object SchubertFactory {
   /**
     * Algorithm adapted from the C source code of the Symmetrica 
     * library which is freely available from
-    *   http://www.algorithm.uni-bayreuth.de/en/research/SYMMETRICA/
+    *   [[http://www.algorithm.uni-bayreuth.de/en/research/SYMMETRICA/]]
     */
   def schubertAlgorithm(leadFactor: Term, index: Int, exponent: Int, 
                         perm: Permutation): Polynomial = {    

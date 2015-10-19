@@ -293,7 +293,7 @@ object InequalityFactory {
   }
   
   /**
-    * Returns a coefficient c^w_{uv}(T) as defined by Klyachko. In general
+    * Returns a coefficient \(c^w_{uv}(T)\) as defined by Klyachko. In general
     * it is a polynomial with integer coefficients.
     */
   def c(u: Permutation, v: Permutation, 
@@ -315,11 +315,10 @@ object InequalityFactory {
   }
 }
 
-// coeffs*vars >= c
 /** Represents an inequality of the form:
-  * 
-  *   sum_i coeffs(i)*l(i) >= const
-  *
+  * $$
+  * sum_i coeffs(i)*l(i) >= const
+  * $$
   * @param coeffs An Array of coefficients.
   * @param const A constant on the right hand side of the inequality.
   */
@@ -337,9 +336,9 @@ class Inequality(val coeffs: Array[Int], val const: Int = 0) {
 /**
   * Represents a marginal inequality satisfied by eigenvalues of partial traces
   * of particles with finitely many degrees of freedom listed in dims.
-  * 
-  *     coeffs(i)*l(i) >= const
-  *
+  * $$
+  * coeffs(i)*l(i) >= const
+  * $$
   * @param coeffs An array of coefficients of the inequality.
   * @param dims A list of dimensions.
   * @param const A constant on the right hand side of the inequality.
@@ -412,17 +411,18 @@ class MarginalInequality(coeffs: Array[Int], val dims: List[Int], const: Int)
   * Represents an inequality satisfied by distinguishable, pure states.
   *
   * @constructor Create an inequality with coefficients `coeffs` satisfied by
-  *   pure states of a system of distinguishable particles with `dims` degrees
-  *   of freedom and offset `const`:
+  * pure states of a system of distinguishable particles with `dims` degrees
+  * of freedom and offset `const`:
+  * $$
+  * a(1) l^A_u(1) + .. + b(1) l^B_v(1) + .. + ab(1) l^{ab}_w(1) >= c
+  * $$
+  * where `c = const` and `a(i) = const(i-1)`, `b(j) = const(dims(0)+j-1)` and
+  * `ab(k) = const(dims(0)+dims(1)+k-1)`.
   *
-  *     a(1) l^A_u(1) + .. + b(1) l^B_v(1) + .. + ab(1) l^{ab}_w(1) >= c
-  *
-  *   where `c = const` and `a(i) = const(i-1)`, `b(j) = const(dims(0)+j-1)` and
-  *   `ab(k) = const(dims(0)+dims(1)+k-1)`.
   * @param coeffs Array of coefficients of the inequality. Its length must be:
-  *
-  *   coeffs.length = dims(0) + dims(1) + dims(0)*dims(1)
-  *
+  * {{{
+  * coeffs.length = dims(0) + dims(1) + dims(0)*dims(1)
+  * }}}
   * @param dims List of dimensions of component systems.
   * @param const Offset of inequality.
   */
@@ -441,17 +441,19 @@ class InequalityDP(coeffs: Array[Int], dims: List[Int], const: Int = 0)
   * distinguishable particles.
   *
   * @constructor Create an inequality with coefficients `coeffs` satisfied by
-  *   mixed states of a system of distinguishable particles with `dims` degrees
-  *   of freedom and offset `const`:
+  * mixed states of a system of distinguishable particles with `dims` degrees
+  * of freedom and offset `const`:
+  * $$
+  * a(1) \lambda^A_u(1) + \cdots + b(1) \lambda^B_v(1) + \cdots 
+  *   + ab(1) \lambda^{AB}_w(1) + \cdots  >= c
+  * $$
+  * where `c = const` and `a(i) = const(i-1)`, `b(j) = const(dims(0)+j-1)` and
+  * `ab(k) = const(dims(0)+dims(1)+k-1)`.
   *
-  *     a(1) l^A_u(1) + .. + b(1) l^B_v(1) + .. + ab(1) l^{ab}_w(1) >= c
-  *
-  *   where `c = const` and `a(i) = const(i-1)`, `b(j) = const(dims(0)+j-1)` and
-  *   `ab(k) = const(dims(0)+dims(1)+k-1)`.
   * @param coeffs Array of coefficients of the inequality. Its length must be:
-  *
-  *   coeffs.length = dims(0) + dims(1) + dims(0)*dims(1)
-  *
+  * {{{
+  * coeffs.length = dims(0) + dims(1) + dims(0)*dims(1)
+  * }}}
   * @param dims List of dimensions of component systems.
   * @param const Offset of inequality.
   */
@@ -462,8 +464,8 @@ class InequalityDM(coeffs: Array[Int], dims: List[Int], const: Int = 0)
     *
     * @param u A permutation.
     * @param v A permutation.
-    * @param w A permutation on m*n elements where u and v are permutations on
-    *   m and n elements respectively.
+    * @param w A permutation on \(m*n\) elements where `u` and `v` are permutations on
+    * \(m\) and \(n\) elements respectively.
     * @param e A vector of length m + n + m*n where u and v are permutations
     *   on m and n elements respectively.
     */

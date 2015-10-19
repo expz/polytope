@@ -46,7 +46,7 @@ class PolyhedralCone(val eqs: Array[Array[Int]], val ieqs: Array[Array[Int]]) {
     * Returns the intersection of this polyhedral cone with a given cone.
     *
     * @param P2 A polyhedral cone to intersect.
-    * @returns The intersection of `P2` with this cone.
+    * @return The intersection of `P2` with this cone.
     */
   def intersection(P2: PolyhedralCone): PolyhedralCone = {
     val eqsToAdd = 
@@ -248,7 +248,7 @@ class Edge(val edge: Array[Int]) {
     *   ...
     *
     * @param v An array of integers.
-    * @returns The consecutive multiplicities of `v`.
+    * @return The consecutive multiplicities of `v`.
     */
   protected def mult(v: Array[Int]): Array[Int] = {
     val m = ArrayBuffer[Int]()

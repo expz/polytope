@@ -485,7 +485,7 @@ def main(args: Array[String]) {
   * Returns the inverse of a given permutation.
   *
   * @param p The permutation of which to take an inverse.
-  * @returns The inverse of p.
+  * @return The inverse of p.
   */
 def inverse(p: Permutation): Permutation 
             = Array.tabulate[Int](p.length)(n => p.indexWhere(_ == n+1) + 1)
@@ -495,7 +495,7 @@ def inverse(p: Permutation): Permutation
   *
   * @param p The permutation to apply.
   * @param a The array to permute.
-  * @returns The array a permuted by the permutation p.
+  * @return The array a permuted by the permutation p.
   */
 def act[A](p: Permutation, a: Array[A])(implicit tag: ClassTag[A]): Array[A] = {
   assert(a.length >= p.length)
@@ -546,7 +546,7 @@ def toLehmerCode(p: Permutation): ArrayBuffer[Int] = {
   * of transpositions.
   *
   * @param p The permutation to decompose.
-  * @returns An array a
+  * @return An array a
   */
 def reducedWord(p: Permutation): Array[Int] = {
   val code = toLehmerCode(p)

@@ -11,7 +11,7 @@ object PermutationFactory {
   /** Returns ArrayBuffer of all permutations on n letters
     *  
     * @param n The size (number of elements) of the permutations.
-    * @returns All permutations on n letters
+    * @return All permutations on n letters
     */
   def permutationsOfSize(n: Int): ArrayBuffer[Permutation] = 
         ArrayBuffer[Permutation]() ++ Array.tabulate[Int](n)(_+1).permutations
@@ -20,7 +20,7 @@ object PermutationFactory {
     *
     * @param w1 A permutation.
     * @param w2 A permutation.
-    * @returns The shifted shuffle product of `w1` and `w2`.
+    * @return The shifted shuffle product of `w1` and `w2`.
     */
   def shiftedShuffleProduct(w1: Permutation, w2: Permutation): 
         ArrayBuffer[Permutation] = {
@@ -34,7 +34,7 @@ object PermutationFactory {
     *
     * @param seq
     * @param left
-    * @returns
+    * @return
     */
   def distinctShuffleProduct[A](seq: ArrayBuffer[A], left: Int)
     (implicit T: ClassTag[A]): ArrayBuffer[Array[A]] = {
@@ -58,7 +58,7 @@ object PermutationFactory {
     * Returns an ArrayBuffer of all shuffles with given multiplicities.
     *
     * @param mults
-    * @returns
+    * @return
     */
   def shuffles(mults: Array[Int]): ArrayBuffer[Permutation] = {
     val S2 = ArrayBuffer[Permutation]()
@@ -92,7 +92,7 @@ object PermutationFactory {
     *
     * @param mults
     * @param numInversions
-    * @returns All permutations with multiplicities `mults` with exactly
+    * @return All permutations with multiplicities `mults` with exactly
     *   `numInversions` inversions.
     */
   def shufflesOfGivenLength(mults: Array[Int], numInversions: Int): 
