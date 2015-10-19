@@ -6,6 +6,7 @@ import scala.collection.immutable.List
 import scala.util.matching.Regex
 
 import java.io.File
+import sys.process.Process
 
 object PolytopeBuild extends Build {
   // Scala version
@@ -43,7 +44,12 @@ object PolytopeBuild extends Build {
 
   /////////////////////////////////////////////////////
   // Prepare native libraries
-/*
+  
+  lazy val downloadNativeLibs = TaskKey[Unit](
+    "download any missing native libraries to lib/ directory"
+  )
+
+  /*
   lazy val copyNativeLibs = TaskKey[Unit](
     "copy the native libraries for the current os and arch to lib/ directory"
   )
@@ -78,6 +84,13 @@ object PolytopeBuild extends Build {
 
   lazy val polytopeSettings = Seq(
     name := "polytope",
+
+    // Download native libraries and supporting jars if they are missing
+    downloadNativeLibs := {
+      Process("./getlibs.sh", (baseDirectory map { base => base / "lib" }).value).!!
+    },
+    compile in Compile <<= (compile in Compile).dependsOn(downloadNativeLibs),
+
     libraryDependencies ++= Seq(
       scalaLibrary,
       scalaReflect,
@@ -90,22 +103,26 @@ object PolytopeBuild extends Build {
     ),
     unmanagedJars in Compile <++= baseDirectory map { base =>
       val baseDirectories = (base / "lib")
-      val customJars = (baseDirectories ** "*.jar")
+      val customJars = (baseDirectories / "com.google.ortools.jar") +++ (baseDirectories / "ppl_java.jar")
       customJars.classpath
     },
     unmanagedJars in Test <++= baseDirectory map { base =>
       val baseDirectories = (base / "lib")
-      val customJars = (baseDirectories ** "*.jar")
+      val customJars = (baseDirectories / "com.google.ortools.jar") +++ (baseDirectories / "ppl_java.jar")
       customJars.classpath
     },
+   
     // Set native library path (this requires forking the sbt JVM)
     javaOptions := Seq(
       "-Djava.library.path=" + 
         System.getProperty("java.library.path") + File.pathSeparator +
-        nativeLibsPath,
+        libsPath,
       "-Dfile.encoding=UTF-8"
     ),
+
+    // We must fork in order to load the native libraries
     fork := true,
+
     /*
     protectMath := {
       val srcDir = ...
