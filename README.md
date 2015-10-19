@@ -23,6 +23,7 @@ Compiling and running this program currently requires:
 
 * __64-bit linux__: because of the ppl library (see below)
 * __sbt 0.13.9__: get it at http://www.scala-sbt.org/download.html
+* __curl__: used to download any missing native libs
 * __7z__: used to extract native libs after downloading (ubuntu: p7zip-full)
 
 To test it out:
