@@ -21,9 +21,9 @@ This software is licensed under the GPLv3.
 
 Compiling and running this program currently requires:
 
-* _64-bit linux_: because of the ppl library (see below)
-* _sbt 0.13.9_: get it at http://www.scala-sbt.org/download.html
-* _7z_: used to extract native libs after downloading (ubuntu: p7zip-full)
+* __64-bit linux__: because of the ppl library (see below)
+* __sbt 0.13.9__: get it at http://www.scala-sbt.org/download.html
+* __7z__: used to extract native libs after downloading (ubuntu: p7zip-full)
 
 To test it out:
 
@@ -66,25 +66,26 @@ All necessary libraries are automatically downloaded by `sbt`.
 
 __Libraries:__
 
--- Parma polyhedral library for calculating edges of a polyhedral cone 
+* Parma polyhedral library for calculating edges of a polyhedral cone 
    (http://bugseng.com/products/ppl) (GPLv3 License)
    
--- Google Operations Research (OR) Tools which provide a java interface to
+* Google Operations Research (OR) Tools which provide a java interface to
    the CBC library
    (https://code.google.com/p/or-tools/) (Apache 2.0 License)
    
--- Scallop for processing command line arguments
+* Scallop for processing command line arguments
    (https://github.com/scallop/scallop) (MIT License)
 
--- ScalaTest 2.1.0 for writing tests of the code
+* ScalaTest 2.1.0 for writing tests of the code
    (https://github.com/scalatest/scalatest) (Apache 2.0 License)
    
 __Supporting Libraries:__
 
--- GNU Multiple Precision Arithmetic Library called by libppl
+* GNU Multiple Precision Arithmetic Library called by libppl
    (https://gmplib.org) (GPLv2 License)
 
-(A previous version used the COIN CBC Solver library (Eclise Public License 1.0) directly, but it is now included in the Google OR Tools.) 
+* _(A previous version used the COIN CBC Solver library (Eclise Public License 
+  1.0) directly, but it is now included in the Google OR Tools.)_
 
-(A previous version used the GLPK integer programming library, but it is not
-thread-safe.)
+* _(A previous version used the GLPK integer programming library, but it is not
+  thread-safe.)_
